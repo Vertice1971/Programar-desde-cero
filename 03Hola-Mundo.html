@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Hola personalizado</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 20%;
+      font-size: 2rem;
+    }
+    .rojo {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div id="saludo"></div>
+
+  <script>
+    document.getElementById("saludo").innerHTML = "Hola, mundo";
+
+    setTimeout(() => {
+      let nombre = prompt("¿Cómo te llamas?");
+      document.getElementById("saludo").innerHTML += "<br><span class='rojo'>Hola, " + nombre + "</span>";
+    }, 100); // espera 100 milisegundos antes de preguntar el nombre
+  </script>
+</body>
+</html>
