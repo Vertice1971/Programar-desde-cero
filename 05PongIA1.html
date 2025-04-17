@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Clásico</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        #gameCanvas {
+            background-color: #000;
+            border: 2px solid #fff;
+        }
+        
+        #score {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 32px;
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">0 - 0</div>
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <div id="instructions">Usa las teclas W (arriba) y S (abajo) para mover tu paleta</div>
+
+    <script>
+        // Configuración del juego
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        
+        // Dimensiones y propiedades de los elementos del juego
+        const PADDLE_WIDTH = 15;
+        const PADDLE_HEIGHT = 100;
+        const BALL_SIZE = 15;
+        const PADDLE_MARGIN = 20;
+        
+        // Posiciones iniciales
+        let leftPaddleY = canvas.height / 2 - PADDLE_HEIGHT / 2;
+        let rightPaddleY = canvas.height / 2 - PADDLE_HEIGHT / 2;
+        let ballX = canvas.width / 2;
+        let ballY = canvas.height / 2;
+        
+        // Velocidades
+        let leftPaddleSpeed = 0;
+        let rightPaddleSpeed = 8; // Velocidad de la IA
+        let ballSpeedX = 5;
+        let ballSpeedY = 5;
+        
+        // Puntuación
+        let playerScore = 0;
+        let aiScore = 0;
+        
+        // Control del juego
+        let gameRunning = true;
+        
+        // Eventos de teclado
+        document.addEventListener('keydown', function(event) {
+            if (event.key.toLowerCase() === 'w') {
+                leftPaddleSpeed = -8;
+            } else if (event.key.toLowerCase() === 's') {
+                leftPaddleSpeed = 8;
+            }
+        });
+        
+        document.addEventListener('keyup', function(event) {
+            if (event.key.toLowerCase() === 'w' || event.key.toLowerCase() === 's') {
+                leftPaddleSpeed = 0;
+            }
+        });
+        
+        // Función para reiniciar la pelota
+        function resetBall() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            
+            // Dirección aleatoria al reiniciar
+            ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * 5;
+            ballSpeedY = (Math.random() * 4 - 2);
+        }
+        
+        // Función para actualizar la posición de los elementos
+        function update() {
+            if (!gameRunning) return;
+            
+            // Mover paleta izquierda (jugador)
+            leftPaddleY += leftPaddleSpeed;
+            
+            // Limitar paleta izquierda a los bordes del canvas
+            if (leftPaddleY < 0) leftPaddleY = 0;
+            if (leftPaddleY > canvas.height - PADDLE_HEIGHT) leftPaddleY = canvas.height - PADDLE_HEIGHT;
+            
+            // IA para la paleta derecha
+            let rightPaddleCenter = rightPaddleY + PADDLE_HEIGHT / 2;
+            let ballCenter = ballY + BALL_SIZE / 2;
+            
+            // Seguir la pelota con un pequeño retraso para hacerlo más realista
+            if (rightPaddleCenter < ballCenter - 10) {
+                rightPaddleY += rightPaddleSpeed * 0.7;
+            } else if (rightPaddleCenter > ballCenter + 10) {
+                rightPaddleY -= rightPaddleSpeed * 0.7;
+            }
+            
+            // Limitar paleta derecha a los bordes del canvas
+            if (rightPaddleY < 0) rightPaddleY = 0;
+            if (rightPaddleY > canvas.height - PADDLE_HEIGHT) rightPaddleY = canvas.height - PADDLE_HEIGHT;
+            
+            // Mover pelota
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+            
+            // Colisión con los bordes superior e inferior
+            if (ballY < 0 || ballY > canvas.height - BALL_SIZE) {
+                ballSpeedY = -ballSpeedY;
+            }
+            
+            // Colisión con la paleta izquierda
+            if (ballX < PADDLE_MARGIN + PADDLE_WIDTH && 
+                ballX > PADDLE_MARGIN && 
+                ballY + BALL_SIZE > leftPaddleY && 
+                ballY < leftPaddleY + PADDLE_HEIGHT) {
+                
+                // Ajustar dirección y velocidad basado en dónde golpea la paleta
+                let hitPosition = (ballY - leftPaddleY) / PADDLE_HEIGHT;
+                ballSpeedX = 5;
+                ballSpeedY = (hitPosition - 0.5) * 10;
+                ballX = PADDLE_MARGIN + PADDLE_WIDTH; // Evitar que la pelota se quede atascada
+            }
+            
+            // Colisión con la paleta derecha
+            if (ballX > canvas.width - PADDLE_MARGIN - PADDLE_WIDTH - BALL_SIZE && 
+                ballX < canvas.width - PADDLE_MARGIN - PADDLE_WIDTH && 
+                ballY + BALL_SIZE > rightPaddleY && 
+                ballY < rightPaddleY + PADDLE_HEIGHT) {
+                
+                // Ajustar dirección y velocidad basado en dónde golpea la paleta
+                let hitPosition = (ballY - rightPaddleY) / PADDLE_HEIGHT;
+                ballSpeedX = -5;
+                ballSpeedY = (hitPosition - 0.5) * 10;
+                ballX = canvas.width - PADDLE_MARGIN - PADDLE_WIDTH - BALL_SIZE; // Evitar que la pelota se quede atascada
+            }
+            
+            // Puntuación
+            if (ballX < 0) {
+                aiScore++;
+                scoreElement.textContent = `${playerScore} - ${aiScore}`;
+                resetBall();
+            } else if (ballX > canvas.width) {
+                playerScore++;
+                scoreElement.textContent = `${playerScore} - ${aiScore}`;
+                resetBall();
+            }
+        }
+        
+        // Función para dibujar los elementos
+        function draw() {
+            // Limpiar canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Dibujar línea central
+            ctx.strokeStyle = '#fff';
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Dibujar paletas
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(PADDLE_MARGIN, leftPaddleY, PADDLE_WIDTH, PADDLE_HEIGHT); // Paleta izquierda
+            ctx.fillRect(canvas.width - PADDLE_MARGIN - PADDLE_WIDTH, rightPaddleY, PADDLE_WIDTH, PADDLE_HEIGHT); // Paleta derecha
+            
+            // Dibujar pelota
+            ctx.fillRect(ballX, ballY, BALL_SIZE, BALL_SIZE);
+        }
+        
+        // Bucle principal del juego
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Iniciar el juego
+        resetBall();
+        gameLoop();
+    </script>
+</body>
+</html>
