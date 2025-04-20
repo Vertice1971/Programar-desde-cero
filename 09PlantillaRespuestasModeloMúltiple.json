@@ -1,0 +1,49 @@
+{
+  "preguntas": [
+    {
+      "texto": "¿Cuál fue una de las causas principales de la Revolución Francesa?",
+      "opciones": {
+        "a": "El descubrimiento de América",
+        "b": "La crisis económica y social del Antiguo Régimen",
+        "c": "La guerra de Sucesión Española"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué personaje fue clave en el desarrollo del Imperio Napoleónico?",
+      "opciones": {
+        "a": "Luis XVI",
+        "b": "Robespierre",
+        "c": "Napoleón Bonaparte"
+      },
+      "respuesta": "c"
+    },
+    {
+      "texto": "¿En qué año comenzó la Revolución Industrial en Inglaterra aproximadamente?",
+      "opciones": {
+        "a": "Finales del siglo XVIII",
+        "b": "Mitad del siglo XIX",
+        "c": "Principios del siglo XVII"
+      },
+      "respuesta": "a"
+    },
+    {
+      "texto": "¿Cuál fue una consecuencia social de la Revolución Industrial?",
+      "opciones": {
+        "a": "El aumento del poder de la nobleza",
+        "b": "La aparición de una clase obrera urbana",
+        "c": "El fortalecimiento del feudalismo"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué ideología defendía la propiedad privada y el libre mercado en el siglo XIX?",
+      "opciones": {
+        "a": "El liberalismo",
+        "b": "El socialismo utópico",
+        "c": "El absolutismo"
+      },
+      "respuesta": "a"
+    }
+  ]
+}
