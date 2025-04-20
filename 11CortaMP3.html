@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cortador de MP3</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 360px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    input[type="file"] {
+      width: 100%;
+    }
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      padding: 6px;
+      font-size: 0.9rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .time-inputs > div {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .time-inputs input[type="number"] {
+      width: 48%;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+    }
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #333;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Cortador de MP3</h1>
+    <div class="field">
+      <label for="fileInput">Archivo MP3:</label>
+      <input type="file" id="fileInput" accept="audio/mpeg" />
+    </div>
+    <div class="field time-inputs">
+      <div>
+        <label>Inicio (mm:ss):</label>
+        <input type="number" id="startMin" min="0" value="0" />
+        <span>:</span>
+        <input type="number" id="startSec" min="0" max="59" value="0" />
+      </div>
+      <div>
+        <label>Fin (mm:ss):</label>
+        <input type="number" id="endMin" min="0" value="0" />
+        <span>:</span>
+        <input type="number" id="endSec" min="0" max="59" value="0" />
+      </div>
+    </div>
+    <div class="field">
+      <label for="outputName">Nombre de salida:</label>
+      <input type="text" id="outputName" value="corte.mp3" />
+    </div>
+    <button id="cutButton" disabled>Cortar</button>
+    <div id="status"></div>
+  </div>
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const startMin = document.getElementById('startMin');
+    const startSec = document.getElementById('startSec');
+    const endMin = document.getElementById('endMin');
+    const endSec = document.getElementById('endSec');
+    const outputName = document.getElementById('outputName');
+    const cutButton = document.getElementById('cutButton');
+    const status = document.getElementById('status');
+
+    let audioDuration = 0;
+    let fileBlob = null;
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      if (file.type !== 'audio/mpeg' && !file.name.toLowerCase().endsWith('.mp3')) {
+        alert('Por favor selecciona un archivo MP3.');
+        fileInput.value = '';
+        return;
+      }
+      fileBlob = file;
+      const audio = document.createElement('audio');
+      audio.src = URL.createObjectURL(file);
+      audio.addEventListener('loadedmetadata', () => {
+        audioDuration = audio.duration;
+        const mins = Math.floor(audioDuration / 60);
+        const secs = Math.floor(audioDuration % 60).toString().padStart(2, '0');
+        status.textContent = `Duración: ${mins}:${secs}`;
+        cutButton.disabled = false;
+      });
+    });
+
+    cutButton.addEventListener('click', () => {
+      const start = parseInt(startMin.value) * 60 + parseInt(startSec.value);
+      const end = parseInt(endMin.value) * 60 + parseInt(endSec.value);
+      if (isNaN(start) || isNaN(end) || start >= end || end > audioDuration) {
+        alert('Tiempos inválidos.');
+        return;
+      }
+      const fileSize = fileBlob.size;
+      const startByte = Math.floor((start / audioDuration) * fileSize);
+      const endByte = Math.floor((end / audioDuration) * fileSize);
+      const sliced = fileBlob.slice(startByte, endByte);
+      const blob = new Blob([sliced], { type: 'audio/mpeg' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      let name = outputName.value.trim() || 'corte.mp3';
+      if (!name.toLowerCase().endsWith('.mp3')) name += '.mp3';
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      status.textContent = `Archivo generado: ${name}`;
+    });
+  </script>
+</body>
+</html>
