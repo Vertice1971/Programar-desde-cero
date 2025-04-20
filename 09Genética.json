@@ -1,0 +1,274 @@
+{
+  "preguntas": [
+    {
+      "texto": "¿Qué estudia la genética?",
+      "opciones": {
+        "a": "El comportamiento de los animales",
+        "b": "La transmisión de caracteres hereditarios",
+        "c": "El crecimiento de las plantas"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué es un gen?",
+      "opciones": {
+        "a": "Una proteína que forma parte del ADN",
+        "b": "Una célula del sistema nervioso",
+        "c": "Un fragmento de ADN que determina un carácter"
+      },
+      "respuesta": "c"
+    },
+    {
+      "texto": "¿Qué es un alelo?",
+      "opciones": {
+        "a": "Un tipo especial de proteína",
+        "b": "Una forma alternativa de un gen",
+        "c": "Un cromosoma defectuoso"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué significa que un individuo es homocigótico?",
+      "opciones": {
+        "a": "Tiene dos alelos diferentes para un carácter",
+        "b": "Tiene dos alelos iguales para un carácter",
+        "c": "Tiene más de dos alelos"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué es el genotipo?",
+      "opciones": {
+        "a": "La apariencia externa de un organismo",
+        "b": "El conjunto de genes que posee un individuo",
+        "c": "La cantidad de proteínas que produce un organismo"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué es el fenotipo?",
+      "opciones": {
+        "a": "La manifestación observable del genotipo",
+        "b": "La secuencia de nucleótidos en el ADN",
+        "c": "El tipo de célula que forma un tejido"
+      },
+      "respuesta": "a"
+    },
+    {
+      "texto": "¿Cuál es la primera ley de Mendel?",
+      "opciones": {
+        "a": "Herencia intermedia",
+        "b": "Segregación de alelos",
+        "c": "Uniformidad de la F1"
+      },
+      "respuesta": "c"
+    },
+    {
+      "texto": "¿Qué ocurre en la segunda ley de Mendel?",
+      "opciones": {
+        "a": "Aparece el carácter recesivo en F2",
+        "b": "Todos los descendientes son iguales",
+        "c": "Los genes se mezclan completamente"
+      },
+      "respuesta": "a"
+    },
+    {
+      "texto": "¿Qué proporción se obtiene en la tercera ley de Mendel (herencia independiente)?",
+      "opciones": {
+        "a": "3:1",
+        "b": "9:3:3:1",
+        "c": "1:2:1"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Quién propuso la teoría cromosómica de la herencia?",
+      "opciones": {
+        "a": "Mendel",
+        "b": "Watson y Crick",
+        "c": "Sutton y Boveri"
+      },
+      "respuesta": "c"
+    },
+    {
+      "texto": "¿Qué demostró Thomas Morgan?",
+      "opciones": {
+        "a": "La doble hélice del ADN",
+        "b": "La herencia ligada al sexo",
+        "c": "La replicación semiconservativa"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué son los cromosomas homólogos?",
+      "opciones": {
+        "a": "Dos cromosomas idénticos de un mismo progenitor",
+        "b": "Dos cromosomas con los mismos genes, uno de cada progenitor",
+        "c": "Cromosomas que se duplican en la mitosis"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué tipo de herencia está determinada por varios genes?",
+      "opciones": {
+        "a": "Letal",
+        "b": "Dominante-recesiva",
+        "c": "Poligénica"
+      },
+      "respuesta": "c"
+    },
+    {
+      "texto": "¿Qué es la epistasia?",
+      "opciones": {
+        "a": "Un gen afecta a varios caracteres",
+        "b": "Un gen modifica la expresión de otro",
+        "c": "Dos genes se duplican"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué significa que un alelo es letal?",
+      "opciones": {
+        "a": "Que no se expresa en el fenotipo",
+        "b": "Que provoca una enfermedad leve",
+        "c": "Que puede causar la muerte del individuo"
+      },
+      "respuesta": "c"
+    },
+    {
+      "texto": "¿Qué herramienta se usa para predecir la descendencia genética?",
+      "opciones": {
+        "a": "Microscopio",
+        "b": "Cuadro de Punnett",
+        "c": "Árbol genealógico"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué combinación determina el sexo masculino en humanos?",
+      "opciones": {
+        "a": "XX",
+        "b": "XY",
+        "c": "YY"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Dónde se localizan la mayoría de los genes ligados al sexo?",
+      "opciones": {
+        "a": "Cromosoma Y",
+        "b": "Cromosoma X",
+        "c": "Cromosoma 21"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Por qué los varones manifiestan más enfermedades recesivas ligadas al X?",
+      "opciones": {
+        "a": "Porque tienen más genes",
+        "b": "Porque tienen dos cromosomas X",
+        "c": "Porque solo tienen una copia del cromosoma X"
+      },
+      "respuesta": "c"
+    },
+    {
+      "texto": "¿Qué es un carácter hereditario?",
+      "opciones": {
+        "a": "Una costumbre cultural",
+        "b": "Una característica adquirida por el ambiente",
+        "c": "Una característica biológica transmitida por los genes"
+      },
+      "respuesta": "c"
+    },
+    {
+      "texto": "¿Qué es un locus?",
+      "opciones": {
+        "a": "Una mutación en el ADN",
+        "b": "El lugar que ocupa un gen en el cromosoma",
+        "c": "Un tipo de alelo recesivo"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué es la herencia intermedia?",
+      "opciones": {
+        "a": "Los dos alelos se expresan totalmente",
+        "b": "Se produce una mezcla entre ambos alelos",
+        "c": "Uno de los alelos se elimina"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué es la codominancia?",
+      "opciones": {
+        "a": "Un alelo domina sobre otro",
+        "b": "Ningún alelo se expresa",
+        "c": "Ambos alelos se expresan simultáneamente"
+      },
+      "respuesta": "c"
+    },
+    {
+      "texto": "¿Qué es el alelismo múltiple?",
+      "opciones": {
+        "a": "Hay más de dos alelos posibles para un gen",
+        "b": "Los genes tienen múltiples funciones",
+        "c": "Los genes se duplican"
+      },
+      "respuesta": "a"
+    },
+    {
+      "texto": "¿Qué es la pleiotropía?",
+      "opciones": {
+        "a": "Un gen afecta a varios caracteres",
+        "b": "Un carácter depende de muchos genes",
+        "c": "Una mutación afecta a un solo gen"
+      },
+      "respuesta": "a"
+    },
+    {
+      "texto": "¿Qué es un mapa genético?",
+      "opciones": {
+        "a": "Una representación geográfica de los genes",
+        "b": "Un esquema que indica la localización de los genes en los cromosomas",
+        "c": "Un tipo de ADN circular"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué indica la unidad centimorgan?",
+      "opciones": {
+        "a": "El tamaño de un gen",
+        "b": "La distancia relativa entre genes",
+        "c": "La velocidad de mutación"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué es el sobrecruzamiento cromosómico?",
+      "opciones": {
+        "a": "Una alteración del ADN",
+        "b": "Un cruce entre cromosomas no homólogos",
+        "c": "Intercambio de fragmentos entre cromosomas homólogos"
+      },
+      "respuesta": "c"
+    },
+    {
+      "texto": "¿Qué proporción fenotípica se espera en la F2 según la segunda ley de Mendel?",
+      "opciones": {
+        "a": "1:2:1",
+        "b": "3:1",
+        "c": "2:2"
+      },
+      "respuesta": "b"
+    },
+    {
+      "texto": "¿Qué representa un cuadro de Punnett?",
+      "opciones": {
+        "a": "Una tabla de multiplicar",
+        "b": "Un método para visualizar combinaciones genéticas",
+        "c": "Un tipo de gráfico de barras"
+      },
+      "respuesta": "b"
+    }
+  ]
+}
