@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Esto me suena</title>
+  <link rel="stylesheet" href="css/estilo.css" />
+</head>
+<body>
+
+  <!-- MENÚ PRINCIPAL -->
+  <div id="menu">
+    <h1>Esto me suena</h1>
+    <button class="boton-menu" onclick="mostrarSeccion('juego')">Jugar</button>
+    <button class="boton-menu" onclick="mostrarSeccion('cortador')">Cortar MP3</button>
+  </div>
+
+  <!-- SECCIÓN DEL JUEGO -->
+  <div id="juego" class="seccion">
+    <h2>¿Qué canción es?</h2>
+
+    <!-- Botón para seleccionar carpeta al inicio -->
+    <div id="seleccionCarpeta" class="field">
+      <button onclick="seleccionarCarpeta()">Seleccionar carpeta con canciones</button>
+      <div id="numCanciones" style="text-align:center; margin-top: 10px;"></div>
+    </div>
+
+    <!-- Zona activa del juego -->
+    <div id="zonaJuego" style="display:none;">
+      <p id="infoTurno" style="text-align:center; font-weight:bold;"></p>
+      <audio id="audio" controls style="width:100%; margin-bottom: 10px;"></audio>
+
+      <div id="opciones" class="field">
+        <!-- Botones de respuesta se insertan desde JS -->
+      </div>
+
+      <div id="temporizador" style="text-align:center; font-size: 1.2rem; font-weight: bold;"></div>
+      <div id="resultado" style="text-align:center; font-size: 1.1rem; margin-top: 10px;"></div>
+      <div id="avisoSiguiente" style="text-align:center; margin-top: 10px;"></div>
+
+      <div id="marcador" style="text-align:center; margin-top: 20px;">
+        <p>Ronda: <span id="ronda">1</span></p>
+        <div id="puntuaciones">
+          <!-- Aquí se mostrarán las puntuaciones de cada jugador -->
+        </div>
+      </div>
+    </div>
+
+    <br />
+    <button onclick="volverAlMenu()">Volver al menú</button>
+  </div>
+
+  <!-- SECCIÓN DEL CORTADOR -->
+  <div id="cortador" class="seccion cortador">
+    <h2>Cortador de MP3</h2>
+    <div class="field">
+      <label for="fileInput">Archivo MP3:</label>
+      <input type="file" id="fileInput" accept="audio/mpeg" />
+    </div>
+    <div class="field time-inputs">
+      <div>
+        <label>Inicio (mm:ss):</label>
+        <input type="number" id="startMin" min="0" value="0" />
+        <span>:</span>
+        <input type="number" id="startSec" min="0" max="59" value="0" />
+      </div>
+      <div>
+        <label>Fin (mm:ss):</label>
+        <input type="number" id="endMin" min="0" value="0" />
+        <span>:</span>
+        <input type="number" id="endSec" min="0" max="59" value="0" />
+      </div>
+    </div>
+    <div class="field">
+      <label for="outputName">Nombre de salida:</label>
+      <input type="text" id="outputName" value="corte.mp3" />
+    </div>
+    <button id="cutButton" disabled>Cortar</button>
+    <div id="status"></div>
+    <br />
+    <button onclick="volverAlMenu()">Volver al menú</button>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="js/cortador.js"></script>
+  <script src="js/juego.js"></script>
+  <script>
+    function mostrarSeccion(id) {
+      document.getElementById('menu').style.display = 'none';
+      document.querySelectorAll('.seccion').forEach(sec => sec.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
+      if (id === 'cortador' && typeof iniciarCortador === 'function') {
+        iniciarCortador();
+      }
+    }
+
+    function volverAlMenu() {
+      document.querySelectorAll('.seccion').forEach(sec => sec.style.display = 'none');
+      document.getElementById('menu').style.display = 'flex';
+    }
+  </script>
+
+</body>
+</html>
