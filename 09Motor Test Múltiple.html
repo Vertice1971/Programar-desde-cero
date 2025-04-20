@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Opciones Múltiples</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+            background-color: #f5f8ff; /* Fondo azul pastel */
+        }
+        .header-info {
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+        .question-container {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .option {
+            display: block;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+        .option:hover {
+            background: #e0ebff;
+            transform: scale(1.05);
+        }
+        .correct {
+            background: #c8e6c9;
+            border-color: green;
+        }
+        .incorrect {
+            background: #ffcdd2;
+            border-color: red;
+        }
+        #start-btn, #restart-btn {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #restart-btn {
+            background: #28a745;
+        }
+        /* Posiciona el botón "Siguiente" fijo a la derecha, en zona media/alta */
+        #next-btn {
+            position: fixed;
+            right: 20px;
+            top: 30%;
+            padding: 10px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            display: none;
+        }
+        #info-container {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Información discreta en cabecera -->
+    <div class="header-info">
+        <div>Tomás Cuesta</div>
+        <div>IES Juan de la Cierva</div>
+    </div>
+
+    <h1>Test de Opciones Múltiples</h1>
+    <label for="file-input">Selecciona el archivo JSON:</label>
+    <input type="file" id="file-input" accept=".json">
+    <div id="info-container"></div>
+    <button id="start-btn">Comenzar Quiz</button>
+
+    <div id="quiz-container" class="question-container"></div>
+    <button id="next-btn">Siguiente</button>
+    <button id="restart-btn">Reiniciar</button>
+
+    <script>
+        // Tomás Cuesta
+        // tomcue@iesjuandelacierva.com
+
+        // Función Fisher–Yates para barajar un array
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        let preguntas = [];
+        let preguntasElegidas = [];
+        let preguntaActual = 0;
+        let correctas = 0;
+        const quizContainer = document.getElementById('quiz-container');
+        const nextButton = document.getElementById('next-btn');
+        const restartButton = document.getElementById('restart-btn');
+        const startButton = document.getElementById('start-btn');
+        const infoContainer = document.getElementById('info-container');
+        const fileInput = document.getElementById('file-input');
+
+        fileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (!data.preguntas || !Array.isArray(data.preguntas)) {
+                            throw new Error('El archivo JSON no tiene el formato correcto.');
+                        }
+                        preguntas = data.preguntas;
+                        infoContainer.innerHTML = `<p>El archivo contiene <strong>${preguntas.length}</strong> preguntas. Puedes elegir cuántas deseas contestar.</p>`;
+                        startButton.style.display = 'block';
+                        // Deshabilitar la carga de otro JSON
+                        fileInput.disabled = true;
+                    } catch (error) {
+                        alert('Error al leer el archivo JSON: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        startButton.addEventListener('click', function() {
+            let numPreguntas = prompt(`El test tiene ${preguntas.length} preguntas. ¿Cuántas deseas jugar?`, preguntas.length);
+            numPreguntas = parseInt(numPreguntas);
+            if (isNaN(numPreguntas) || numPreguntas < 1 || numPreguntas > preguntas.length) {
+                alert('Número no válido. Se jugarán todas las preguntas.');
+                numPreguntas = preguntas.length;
+            }
+            // Usar Fisher–Yates para barajar las preguntas
+            preguntasElegidas = shuffle([...preguntas]).slice(0, numPreguntas);
+            preguntaActual = 0;
+            correctas = 0;
+            startButton.style.display = 'none';
+            infoContainer.innerHTML = '';
+            mostrarPregunta();
+        });
+
+        function mostrarPregunta() {
+            if (preguntaActual < preguntasElegidas.length) {
+                quizContainer.innerHTML = '';
+                quizContainer.style.display = 'block';
+                nextButton.style.display = 'none';
+
+                let pregunta = preguntasElegidas[preguntaActual];
+                let preguntaTitulo = document.createElement('h2');
+                preguntaTitulo.textContent = pregunta.texto;
+                quizContainer.appendChild(preguntaTitulo);
+
+                // Convertir opciones en un array y barajarlas con Fisher–Yates
+                let opcionesArray = Object.entries(pregunta.opciones).map(([key, texto]) => ({ key, texto }));
+                opcionesArray = shuffle(opcionesArray);
+
+                opcionesArray.forEach(opcionObj => {
+                    let opcion = document.createElement('div');
+                    opcion.classList.add('option');
+                    opcion.textContent = opcionObj.texto;
+                    opcion.dataset.valor = opcionObj.key; // Mantener la clave original
+                    opcion.addEventListener('click', function() {
+                        validarRespuesta(this, pregunta.respuesta);
+                    });
+                    quizContainer.appendChild(opcion);
+                });
+            } else {
+                quizContainer.innerHTML = `<h2>¡Test finalizado!</h2><p>Has acertado ${correctas} de ${preguntasElegidas.length} preguntas.</p>`;
+                nextButton.style.display = 'none';
+                restartButton.style.display = 'block';
+            }
+        }
+
+        function validarRespuesta(elemento, respuestaCorrecta) {
+            let opciones = document.querySelectorAll('.option');
+            opciones.forEach(op => op.style.pointerEvents = 'none');
+
+            if (elemento.dataset.valor === respuestaCorrecta) {
+                elemento.classList.add('correct');
+                correctas++;
+            } else {
+                elemento.classList.add('incorrect');
+                let correcta = document.querySelector(`.option[data-valor='${respuestaCorrecta}']`);
+                if (correcta) correcta.classList.add('correct');
+            }
+            nextButton.style.display = 'block';
+        }
+
+        nextButton.addEventListener('click', function() {
+            preguntaActual++;
+            mostrarPregunta();
+        });
+
+        restartButton.addEventListener('click', function() {
+            this.style.display = 'none';
+            startButton.style.display = 'none';
+            preguntaActual = 0;
+            correctas = 0;
+            infoContainer.innerHTML = `<p>El archivo contiene <strong>${preguntas.length}</strong> preguntas. Puedes elegir cuántas deseas contestar.</p>`;
+            startButton.style.display = 'block';
+            quizContainer.innerHTML = '';
+            quizContainer.style.display = 'none';
+            // Volver a habilitar la carga de JSON y limpiar el input
+            fileInput.disabled = false;
+            fileInput.value = "";
+        });
+    </script>
+</body>
+</html>
