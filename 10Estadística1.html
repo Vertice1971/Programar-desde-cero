@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulación de tiradas de dado</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 900px;
+      margin: 2em auto;
+      padding: 1em;
+      background-color: #f4f4f4;
+      border-radius: 10px;
+      text-align: center;
+    }
+    label, input, button {
+      display: block;
+      margin: 0.5em auto;
+    }
+    .pantalla {
+      display: none;
+    }
+    .visible {
+      display: block;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1em;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5em;
+      text-align: center;
+    }
+    th {
+      background-color: #eee;
+    }
+  </style>
+</head>
+<body>
+  <!-- Pantalla de simulación -->
+  <div id="pantalla-inicio" class="pantalla visible">
+    <h1>Simulación de tiradas de dado</h1>
+    <label for="caras">Número de caras del dado:</label>
+    <input type="number" id="caras" min="2" value="6">
+    <label for="tiradas">Número de tiradas:</label>
+    <input type="number" id="tiradas" min="1" value="100">
+    <button onclick="simular()">Tirar dado</button>
+    <div id="resultados"></div>
+    <button id="verTablaBtn" style="display:none;" onclick="mostrarTabla()">Ver tabla de frecuencias</button>
+  </div>
+
+  <!-- Pantalla de la tabla -->
+  <div id="pantalla-tabla" class="pantalla">
+    <h2>Tabla de frecuencias</h2>
+    <div id="tabla-frecuencias"></div>
+    <button onclick="volver()">Volver a simulación</button>
+  </div>
+
+  <script>
+    let datosGuardados = [];
+    let estadisticas     = {};
+
+    // PRNG xoshiro128** a partir de semilla de texto
+    function splitMix32(seed) {
+      let h = seed >>> 0;
+      return function() {
+        h += 0x9e3779b9;
+        let t = h;
+        t = Math.imul(t ^ (t >>> 16), 0x85ebca6b);
+        t = Math.imul(t ^ (t >>> 13), 0xc2b2ae35);
+        return (t ^ (t >>> 16)) >>> 0;
+      };
+    }
+    function xoshiro128ss(seedStr) {
+      let seed = 0;
+      for (let i = 0; i < seedStr.length; i++) {
+        seed = (seed * 31 + seedStr.charCodeAt(i)) >>> 0;
+      }
+      const sm = splitMix32(seed);
+      let s = [sm(), sm(), sm(), sm()];
+      function rotl(x, k) {
+        return (x << k) | (x >>> (32 - k));
+      }
+      return function() {
+        const result = rotl(s[1] * 5, 7) * 9;
+        const t = s[1] << 9;
+        s[2] ^= s[0];
+        s[3] ^= s[1];
+        s[1] ^= s[2];
+        s[0] ^= s[3];
+        s[2] ^= t;
+        s[3] = rotl(s[3], 11);
+        return (result >>> 0) / 2**32;
+      };
+    }
+
+    // Simula tiradas
+    function simular() {
+      const caras   = parseInt(document.getElementById('caras').value);
+      const tiradas = parseInt(document.getElementById('tiradas').value);
+      if (isNaN(caras) || isNaN(tiradas) || caras < 2 || tiradas < 1) {
+        alert("Introduce valores válidos (mínimo 2 caras y 1 tirada).");
+        return;
+      }
+      const semilla = (Date.now() + Math.random()).toString();
+      const rng     = xoshiro128ss(semilla);
+      const resultados = [];
+      for (let i = 0; i < tiradas; i++) {
+        resultados.push(Math.floor(rng() * caras) + 1);
+      }
+      datosGuardados = resultados;
+      calcularEstadisticas(caras, resultados);
+      mostrarResultados(resultados);
+    }
+
+    // Calcula frecuencias absolutas y acumuladas
+    function calcularEstadisticas(caras, datos) {
+      const total = datos.length;
+      const frecAbs = Array(caras).fill(0);
+      datos.forEach(v => frecAbs[v - 1]++);
+      const frecAcum = [];
+      let acc = 0;
+      frecAbs.forEach(f => {
+        acc += f;
+        frecAcum.push(acc);
+      });
+      estadisticas = { frecuenciasAbsolutas: frecAbs, frecuenciasAcumuladas: frecAcum, total };
+    }
+
+    // Muestra lista de resultados y activa botón de tabla
+    function mostrarResultados(resultados) {
+      document.getElementById('resultados').innerHTML =
+        `<h2>Resultados:</h2><p>${resultados.join(', ')}</p>`;
+      document.getElementById('verTablaBtn').style.display = 'block';
+    }
+
+    // Cambia a pantalla de tabla
+    function mostrarTabla() {
+      document.getElementById('pantalla-inicio').classList.remove('visible');
+      document.getElementById('pantalla-tabla').classList.add('visible');
+      generarTablaFrecuenciasSimple();
+    }
+
+    // Genera solo Cara / fi / Fi
+    function generarTablaFrecuenciasSimple() {
+      const { frecuenciasAbsolutas: frecAbs, frecuenciasAcumuladas: frecAcum } = estadisticas;
+      const caras = frecAbs.length;
+      let html = `<table>
+        <thead>
+          <tr><th>Cara</th><th>fi</th><th>Fi</th></tr>
+        </thead><tbody>`;
+      for (let i = 0; i < caras; i++) {
+        html += `<tr>
+          <td>${i + 1}</td>
+          <td>${frecAbs[i]}</td>
+          <td>${frecAcum[i]}</td>
+        </tr>`;
+      }
+      html += `</tbody></table>`;
+      document.getElementById('tabla-frecuencias').innerHTML = html;
+    }
+
+    // Volver a simulación
+    function volver() {
+      document.getElementById('pantalla-tabla').classList.remove('visible');
+      document.getElementById('pantalla-inicio').classList.add('visible');
+      document.getElementById('verTablaBtn').style.display = 'none';
+      document.getElementById('resultados').innerHTML = '';
+    }
+  </script>
+</body>
+</html>
