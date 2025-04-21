@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tanque Artillero Mejorado</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #87CEEB, #1E90FF);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-top: 10px;
+      color: white;
+      text-shadow: 1px 1px 2px black;
+    }
+    #game-container {
+      position: relative;
+      width: 800px;
+      height: 500px;
+      margin-top: 20px;
+      background: linear-gradient(to bottom, #32CD32, #228B22);
+      border: 3px solid #333;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #info-panel {
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      color: white;
+      text-shadow: 1px 1px 2px black;
+      font-size: 18px;
+      z-index: 100;
+    }
+    #info-panel div {
+      margin-bottom: 5px;
+    }
+    #tank {
+      position: absolute;
+      bottom: 0;
+      left: 50px;
+      width: 80px;
+      height: 50px;
+      background-color: #556B2F;
+      border-radius: 10px 10px 0 0;
+    }
+    #cannon {
+      position: absolute;
+      bottom: 25px;
+      left: 80px;
+      width: 40px;
+      height: 8px;
+      background-color: #696969;
+      transform-origin: left center;
+      transform: rotate(45deg);
+    }
+    #game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      display: none;
+      z-index: 200;
+    }
+    #restart-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    #restart-btn:hover {
+      background-color: #45a049;
+    }
+    .bullet {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: black;
+      border-radius: 50%;
+    }
+    .target {
+      position: absolute;
+      bottom: 0;
+      width: 40px;
+      height: 60px;
+      background-color: #8B0000;
+      border-radius: 5px 5px 0 0;
+    }
+    .explosion {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: radial-gradient(circle, yellow, orange, red);
+      border-radius: 50%;
+      opacity: 0;
+      transform: scale(0);
+      animation: explode 0.5s forwards;
+    }
+    @keyframes explode {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(3); opacity: 0; }
+    }
+    .terrain {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 20px;
+      background-color: #8B4513;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tanque Artillero Mejorado</h1>
+  <div id="game-container">
+    <div id="info-panel">
+      <div id="score-display">Puntuación: 0</div>
+      <div id="shots-display">Disparos restantes: 15</div>
+      <div id="timer-display">Tiempo: 60s</div>
+    </div>
+    <div id="tank"><div id="cannon"></div></div>
+    <div class="terrain"></div>
+    <div id="game-over">
+      <h2>¡JUEGO TERMINADO!</h2>
+      <p id="final-score">Puntuación: 0</p>
+      <button id="restart-btn">Jugar de nuevo</button>
+    </div>
+  </div>
+
+  <script>
+    // AudioContext para sonidos
+    const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    function playSound(type) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      if (type === 'fire') {
+        o.frequency.value = 600;
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        o.start(); o.stop(audioCtx.currentTime + 0.1);
+      } else if (type === 'explosion') {
+        o.frequency.value = 100;
+        g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        o.start(); o.stop(audioCtx.currentTime + 0.2);
+      }
+    }
+
+    // Elementos y variables
+    const gameContainer = document.getElementById('game-container');
+    const cannon = document.getElementById('cannon');
+    const scoreDisplay = document.getElementById('score-display');
+    const shotsDisplay = document.getElementById('shots-display');
+    const timerDisplay = document.getElementById('timer-display');
+    const gameOverScreen = document.getElementById('game-over');
+    const finalScoreDisplay = document.getElementById('final-score');
+    const restartBtn = document.getElementById('restart-btn');
+    const gravity = 0.2;
+    let angle = 45, power = 0;
+    let bullets = [], targets = [], explosions = [];
+    let score = 0, gameActive = true;
+    let shotsRemaining = 15, timeRemaining = 60;
+    let chargeInterval, timerInterval;
+
+    // Inicializar
+    function initGame() {
+      // Reset variables
+      angle = 45; power = 0; bullets = []; targets = []; explosions = [];
+      score = 0; gameActive = true; shotsRemaining = 15; timeRemaining = 60;
+      scoreDisplay.textContent = 'Puntuación: 0';
+      shotsDisplay.textContent = 'Disparos restantes: ' + shotsRemaining;
+      timerDisplay.textContent = 'Tiempo: ' + timeRemaining + 's';
+      gameOverScreen.style.display = 'none';
+      // Crear objetivos
+      createTargets(3);
+      // Controles
+      setupControls();
+      // Iniciar temporizador
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (!gameActive) return;
+        timeRemaining--;
+        timerDisplay.textContent = 'Tiempo: ' + timeRemaining + 's';
+        if (timeRemaining <= 0) endGame();
+      }, 1000);
+      // Bucle
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Controles de ratón
+    function setupControls() {
+      let isDragging = false, startY = 0;
+      gameContainer.onmousedown = e => {
+        isDragging = true; startY = e.clientY; startCharging();
+      };
+      gameContainer.onmousemove = e => {
+        if (isDragging) {
+          const delta = startY - e.clientY;
+          angle = Math.min(90, Math.max(0, angle + delta * 0.2));
+          cannon.style.transform = `rotate(${-angle}deg)`;
+          startY = e.clientY;
+        }
+      };
+      gameContainer.onmouseup = () => {
+        if (isDragging) {
+          isDragging = false; stopCharging();
+          if (power > 0) fireBullet();
+        }
+      };
+      gameContainer.onmouseleave = () => {
+        if (isDragging) {
+          isDragging = false; stopCharging();
+        }
+      };
+    }
+
+    // Cargar potencia
+    function startCharging() {
+      power = 0; playSound('fire');
+      clearInterval(chargeInterval);
+      chargeInterval = setInterval(() => {
+        power = Math.min(100, power + 2);
+      }, 50);
+    }
+    function stopCharging() {
+      clearInterval(chargeInterval);
+    }
+
+    // Disparar bala
+    function fireBullet() {
+      if (!gameActive || shotsRemaining <= 0) return;
+      // Sonido disparo
+      playSound('fire');
+      // Calcular posición y velocidad
+      const radians = angle * Math.PI / 180;
+      const x0 = 50 + 80 + Math.cos(radians) * 40;
+      const y0 = gameContainer.offsetHeight - 50 - Math.sin(radians) * 40;
+      const vel = 5 + (power / 100) * 15;
+      const bullet = document.createElement('div');
+      bullet.className = 'bullet';
+      gameContainer.appendChild(bullet);
+      bullets.push({
+        el: bullet,
+        x: x0, y: y0,
+        vx: Math.cos(radians) * vel,
+        vy: -Math.sin(radians) * vel,
+        active: true
+      });
+      // Actualizar disparos
+      shotsRemaining--;
+      shotsDisplay.textContent = 'Disparos restantes: ' + shotsRemaining;
+      if (shotsRemaining <= 0) endGame();
+      power = 0;
+    }
+
+    // Crear objetivos
+    function createTargets(n) {
+      targets.forEach(t => gameContainer.removeChild(t.el));
+      targets = [];
+      for (let i = 0; i < n; i++) {
+        const tEl = document.createElement('div');
+        tEl.className = 'target';
+        const x = Math.random() * 300 + 450;
+        tEl.style.left = x + 'px';
+        gameContainer.appendChild(tEl);
+        targets.push({ el: tEl, x, width:40, height:60, active:true });
+      }
+    }
+
+    // Explosión
+    function createExplosion(x,y) {
+      playSound('explosion');
+      const ex = document.createElement('div');
+      ex.className = 'explosion';
+      ex.style.left = x - 25 + 'px';
+      ex.style.top  = y - 25 + 'px';
+      gameContainer.appendChild(ex);
+      setTimeout(() => { if(ex.parentNode) gameContainer.removeChild(ex); }, 500);
+    }
+
+    // Colisiones y lógica
+    function checkCollisions() {
+      bullets.forEach((b,bi) => {
+        if (!b.active) return;
+        // Colisión suelo
+        if (b.y >= gameContainer.offsetHeight - 10) {
+          b.active = false;
+          createExplosion(b.x, gameContainer.offsetHeight - 10);
+          gameContainer.removeChild(b.el);
+          bullets.splice(bi,1);
+          return;
+        }
+        // Objetivos
+        targets.forEach((t,ti) => {
+          if (!t.active) return;
+          if (b.x >= t.x && b.x <= t.x + t.width &&
+              b.y >= gameContainer.offsetHeight - t.height &&
+              b.y <= gameContainer.offsetHeight) {
+            t.active = false; b.active = false;
+            createExplosion(b.x,b.y);
+            gameContainer.removeChild(t.el);
+            gameContainer.removeChild(b.el);
+            bullets.splice(bi,1);
+            score++;
+            scoreDisplay.textContent = 'Puntuación: ' + score;
+            // Reponer si todos caídos
+            if (!targets.some(tt=>tt.active)) createTargets(3);
+          }
+        });
+      });
+    }
+
+    // Bucle principal
+    function gameLoop() {
+      if (!gameActive) return;
+      bullets.forEach(b => {
+        b.x += b.vx; b.y += b.vy; b.vy += gravity;
+        b.el.style.left = b.x + 'px';
+        b.el.style.top  = b.y + 'px';
+        if (b.x < 0||b.x>gameContainer.offsetWidth||b.y<0){
+          b.active=false;
+          if(b.el.parentNode) gameContainer.removeChild(b.el);
+        }
+      });
+      bullets = bullets.filter(b=>b.active);
+      checkCollisions();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Fin de juego
+    function endGame() {
+      gameActive = false;
+      clearInterval(timerInterval);
+      clearInterval(chargeInterval);
+      finalScoreDisplay.textContent = 'Puntuación: ' + score;
+      gameOverScreen.style.display = 'block';
+    }
+
+    // Reiniciar
+    restartBtn.addEventListener('click', initGame);
+
+    // Comenzar al cargar
+    window.addEventListener('load', initGame);
+  </script>
+</body>
+</html>

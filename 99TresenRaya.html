@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tres en Raya con IA</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: #333;
+    }
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    .container {
+      width: 100%;
+      max-width: 500px;
+      padding: 20px;
+      text-align: center;
+    }
+    .menu, .game-container {
+      background: white;
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    .difficulty-option {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .difficulty-option:hover {
+      background: #e9ecef;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .difficulty-option.selected {
+      border-color: #3498db;
+      background: #e3f2fd;
+    }
+    .difficulty-description {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 8px;
+      text-align: left;
+    }
+    .btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1em;
+      margin-top: 15px;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: #2980b9;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .btn-secondary {
+      background: #95a5a6;
+    }
+    .btn-secondary:hover {
+      background: #7f8c8d;
+    }
+    .game-info {
+      margin-bottom: 20px;
+      font-size: 1.2em;
+      color: #2c3e50;
+      min-height: 24px;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 20px auto;
+      max-width: 300px;
+    }
+    .cell {
+      width: 100%;
+      height: 80px;
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .cell:hover {
+      background: #e9ecef;
+    }
+    .cell.x { color: #e74c3c; }
+    .cell.o { color: #2ecc71; }
+    .cell.winner {
+      background: #fffacd;
+      animation: pulse 0.5s infinite alternate;
+    }
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+    .game-controls {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    @media (max-width: 500px) {
+      .container { padding: 10px; }
+      .menu, .game-container { padding: 15px; }
+      .cell { height: 70px; font-size: 2em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Menú principal -->
+    <div class="menu" id="menu">
+      <h1>TRES EN RAYA</h1>
+      <h2>Selecciona la dificultad de la IA</h2>
+      <div class="difficulty-option" data-difficulty="random">
+        <strong>Fácil (Aleatoria)</strong>
+        <div class="difficulty-description">
+          La IA juega al azar.
+        </div>
+      </div>
+      <div class="difficulty-option" data-difficulty="heuristic">
+        <strong>Intermedia (Heurística)</strong>
+        <div class="difficulty-description">
+          Bloquea y prioriza el centro.
+        </div>
+      </div>
+      <div class="difficulty-option" data-difficulty="minimax">
+        <strong>Difícil (Minimax)</strong>
+        <div class="difficulty-description">
+          IA invencible.
+        </div>
+      </div>
+      <button class="btn" id="start-btn">Comenzar Juego</button>
+    </div>
+
+    <!-- Juego -->
+    <div class="game-container" id="game-container" style="display:none;">
+      <h1>TRES EN RAYA</h1>
+      <div class="game-info" id="game-info">Tu turno (X)</div>
+      <div class="board" id="board">
+        <div class="cell" data-index="0" role="button"></div>
+        <div class="cell" data-index="1" role="button"></div>
+        <div class="cell" data-index="2" role="button"></div>
+        <div class="cell" data-index="3" role="button"></div>
+        <div class="cell" data-index="4" role="button"></div>
+        <div class="cell" data-index="5" role="button"></div>
+        <div class="cell" data-index="6" role="button"></div>
+        <div class="cell" data-index="7" role="button"></div>
+        <div class="cell" data-index="8" role="button"></div>
+      </div>
+      <div class="game-controls">
+        <button class="btn btn-secondary" id="menu-btn">Menú Principal</button>
+        <button class="btn" id="restart-btn">Reiniciar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Variables del juego
+    let board = Array(9).fill('');
+    let currentPlayer = 'X';
+    let gameActive = true;
+    let aiDifficulty = 'heuristic';
+    let isAiTurn = false;
+
+    // Elementos del DOM
+    const menuElement = document.getElementById('menu');
+    const gameContainer = document.getElementById('game-container');
+    const gameInfo = document.getElementById('game-info');
+    const boardElement = document.getElementById('board');
+    const startBtn = document.getElementById('start-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const menuBtn = document.getElementById('menu-btn');
+    const difficultyOptions = document.querySelectorAll('.difficulty-option');
+
+    // Eventos
+    startBtn.addEventListener('click', startGame);
+    restartBtn.addEventListener('click', resetGame);
+    menuBtn.addEventListener('click', () => {
+      gameContainer.style.display = 'none';
+      menuElement.style.display = 'block';
+    });
+    difficultyOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        difficultyOptions.forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        aiDifficulty = option.getAttribute('data-difficulty');
+      });
+    });
+
+    // Iniciar juego
+    function startGame() {
+      menuElement.style.display = 'none';
+      gameContainer.style.display = 'block';
+      resetGame();
+    }
+
+    // Reiniciar juego
+    function resetGame() {
+      board = Array(9).fill('');
+      currentPlayer = 'X';
+      gameActive = true;
+      isAiTurn = false;
+      document.querySelectorAll('.cell').forEach(cell => {
+        cell.textContent = '';
+        cell.classList.remove('x','o','winner');
+      });
+      gameInfo.textContent = 'Tu turno (X)';
+    }
+
+    // Celdas clicables
+    boardElement.querySelectorAll('.cell').forEach(cell => {
+      cell.addEventListener('click', e => {
+        const idx = +e.target.getAttribute('data-index');
+        if (board[idx] || !gameActive || isAiTurn) return;
+
+        makeMove(e.target, idx, currentPlayer);
+        if (checkWin(currentPlayer)) {
+          gameInfo.textContent = `¡Ganaste! (${currentPlayer})`;
+          gameActive = false;
+          highlightWin(currentPlayer);
+          return;
+        } else if (checkDraw()) {
+          gameInfo.textContent = '¡Empate!';
+          gameActive = false;
+          return;
+        }
+
+        currentPlayer = 'O';
+        gameInfo.textContent = 'Turno de la IA (O)';
+        isAiTurn = true;
+        setTimeout(aiMove, 500);
+      });
+    });
+
+    // Realizar movimiento
+    function makeMove(cell, idx, player) {
+      board[idx] = player;
+      cell.textContent = player;
+      cell.classList.add(player.toLowerCase());
+    }
+
+    // Turno IA
+    function aiMove() {
+      if (!gameActive) return;
+      let move;
+      if (aiDifficulty === 'random') move = getRandomMove();
+      else if (aiDifficulty === 'heuristic') move = getHeuristicMove();
+      else move = getMinimaxMove() ?? getRandomMove();
+
+      const cell = document.querySelector(`.cell[data-index="${move}"]`);
+      makeMove(cell, move, currentPlayer);
+
+      if (checkWin(currentPlayer)) {
+        gameInfo.textContent = `La IA ganó (${currentPlayer})`;
+        gameActive = false;
+        highlightWin(currentPlayer);
+      } else if (checkDraw()) {
+        gameInfo.textContent = '¡Empate!';
+        gameActive = false;
+      } else {
+        currentPlayer = 'X';
+        gameInfo.textContent = 'Tu turno (X)';
+      }
+      isAiTurn = false;
+    }
+
+    // IA aleatoria
+    function getRandomMove() {
+      return board.map((v,i)=> v?null:i).filter(v=>v!==null)
+                  [Math.floor(Math.random()*board.filter(v=>v==='').length)];
+    }
+
+    // IA heurística
+    function getHeuristicMove() {
+      // ganar
+      for (let i=0;i<9;i++){
+        if (!board[i]) {
+          board[i]='O';
+          if (checkWin('O')){board[i]='';return i;}
+          board[i]='';
+        }
+      }
+      // bloquear
+      for (let i=0;i<9;i++){
+        if (!board[i]){
+          board[i]='X';
+          if (checkWin('X')){board[i]='';return i;}
+          board[i]='';
+        }
+      }
+      if (!board[4]) return 4;
+      const corners=[0,2,6,8].filter(i=>!board[i]);
+      if (corners.length) return corners[Math.floor(Math.random()*corners.length)];
+      return getRandomMove();
+    }
+
+    // IA Minimax
+    function getMinimaxMove() {
+      let best=-Infinity,move;
+      for (let i=0;i<9;i++){
+        if (!board[i]){
+          board[i]='O';
+          let score=minimax(board,0,false);
+          board[i]='';
+          if (score>best){best=score;move=i;}
+        }
+      }
+      return move;
+    }
+    function minimax(b,d,maximizing){
+      if (checkWin('O')) return 10-d;
+      if (checkWin('X')) return d-10;
+      if (checkDraw()) return 0;
+      let best = maximizing?-Infinity:Infinity;
+      for (let i=0;i<9;i++){
+        if (!b[i]){
+          b[i]= maximizing?'O':'X';
+          let score=minimax(b,d+1,!maximizing);
+          b[i]='';
+          best = maximizing?Math.max(score,best):Math.min(score,best);
+        }
+      }
+      return best;
+    }
+
+    // Comprobar victoria
+    function checkWin(p){
+      return [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
+             .some(c=>c.every(i=>board[i]===p));
+    }
+    // Comprobar empate
+    function checkDraw(){
+      return board.every(c=>c);
+    }
+    // Resaltar victoria
+    function highlightWin(p){
+      const win=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
+                .find(c=>c.every(i=>board[i]===p));
+      if (win) win.forEach(i=>
+        document.querySelector(`.cell[data-index="${i}"]`).classList.add('winner')
+      );
+    }
+
+    // Selección inicial
+    difficultyOptions[1].click();
+  </script>
+</body>
+</html>

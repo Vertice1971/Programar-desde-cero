@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clicker de Recursos Mejorado</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: rgba(0,0,0,0.75);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    h1 {
+      text-align: center;
+      color: #ffd700;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .resource-display {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .resource-amount {
+      font-size: 3em;
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .resource-per-second {
+      font-size: 1.2em;
+      color: #dddddd;
+    }
+    .clicker-area {
+      background: rgba(255,255,255,0.1);
+      border: 3px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 30px;
+      cursor: pointer;
+      transition: transform .1s;
+      position: relative;
+      user-select: none;
+    }
+    .clicker-area:active { transform: scale(0.95); }
+    .clicker-main {
+      font-size: 4em;
+      color: #ffd700;
+    }
+    .click-effect {
+      position: absolute;
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #ffeb3b;
+      animation: float-up 1s forwards;
+      pointer-events: none;
+    }
+    @keyframes float-up {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-50px); opacity: 0; }
+    }
+    .upgrades-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fill,minmax(250px,1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .upgrade {
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 15px;
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: all .3s;
+    }
+    .upgrade.locked { opacity: 0.6; filter: grayscale(50%); }
+    .upgrade.unlocked { border-color: #4caf50; }
+    .upgrade-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .upgrade-name { font-weight: bold; color: #ffd700; }
+    .upgrade-level {
+      background: rgba(0,0,0,0.4);
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: .9em;
+    }
+    .upgrade-description { font-size: .9em; color: #bbbbbb; margin-bottom: 10px; }
+    .upgrade-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: .9em;
+      margin-bottom: 10px;
+    }
+    .upgrade-cost { color: #ff9800; font-weight: bold; }
+    .upgrade-production { color: #4caf50; }
+    .upgrade-button {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+      background: linear-gradient(to right,#4caf50,#8bc34a);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .upgrade-button:disabled {
+      background: linear-gradient(to right,#f44336,#e57373);
+      cursor: not-allowed;
+      opacity: .7;
+    }
+    .achievements-section {
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+    .achievements-title {
+      text-align: center;
+      color: #ffd700;
+      margin-bottom: 15px;
+      font-size: 1.5em;
+    }
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill,minmax(200px,1fr));
+      gap: 10px;
+    }
+    .achievement {
+      background: rgba(0,0,0,0.4);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      border-left: 4px solid transparent;
+      transition: all .3s;
+    }
+    .achievement.unlocked {
+      border-left-color: #ffd700;
+      background: rgba(0,0,0,0.6);
+    }
+    .achievement-icon { font-size: 2em; margin-right: 10px; color: #ffd700; }
+    .achievement-info { flex: 1; }
+    .achievement-name { font-weight: bold; }
+    .achievement-description { font-size: .8em; color: #bbbbbb; }
+    .notification {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: #ffd700;
+      padding: 10px 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      opacity: 0;
+      z-index: 1000;
+      animation: fadeInOut 3s ease-in-out forwards;
+    }
+    @keyframes fadeInOut {
+      0%,100% { opacity: 0; }
+      10%,90% { opacity: 1; }
+    }
+    .game-controls {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    .control-button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .control-button:hover { background: rgba(255,255,255,0.3); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Clicker de Recursos Mejorado</h1>
+
+    <div class="resource-display">
+      <div class="resource-amount" id="resource-amount">0</div>
+      <div class="resource-per-second" id="resource-per-second">0 por segundo</div>
+    </div>
+
+    <div class="clicker-area" id="clicker-area">
+      <div class="clicker-main">¡Haz clic!</div>
+    </div>
+
+    <div class="upgrades-section" id="upgrades-section"></div>
+
+    <div class="achievements-section">
+      <div class="achievements-title">Logros</div>
+      <div class="achievements-grid" id="achievements-grid"></div>
+    </div>
+
+    <div class="game-controls">
+      <button class="control-button" id="save-btn">Guardar</button>
+      <button class="control-button" id="reset-btn">Reiniciar</button>
+    </div>
+  </div>
+
+  <script>
+    // Variables
+    let resources = 0,
+        resourcesPerClick = 1,
+        resourcesPerSecond = 0,
+        totalClicks = 0,
+        totalResourcesEarned = 0;
+
+    // Mejoras
+    const upgrades = [
+      { id:1, name:"Clic Mejorado", desc:"+ producción al clic", baseCost:10, costMult:1.15, baseProd:0.5, level:0, unlocked:true },
+      { id:2, name:"Trabajador",    desc:"Produce automáticamente", baseCost:50, costMult:1.15, baseProd:0.1, level:0, unlocked:true },
+      { id:3, name:"Mina",          desc:"Extrae recursos",         baseCost:200,costMult:1.15, baseProd:0.5, level:0, unlocked:false },
+      { id:4, name:"Fábrica",       desc:"Gran escala",             baseCost:1000,costMult:1.15,baseProd:2,   level:0, unlocked:false },
+      { id:5, name:"Planta Energía",desc:"Tecnología avanzada",     baseCost:5000,costMult:1.15,baseProd:10,  level:0, unlocked:false },
+      { id:6, name:"Nave Espacial", desc:"Recolecta en otros planetas",baseCost:20000,costMult:1.15,baseProd:50,level:0,unlocked:false }
+    ];
+
+    // Logros
+    const achievements = [
+      { id:1, name:"Primeros Pasos",       desc:"10 clics",              icon:"👣", cond:()=>totalClicks>=10,   reward:10,  unlocked:false },
+      { id:2, name:"Clickeador Novato",    desc:"100 clics",             icon:"🖱️", cond:()=>totalClicks>=100,  reward:50,  unlocked:false },
+      { id:3, name:"Primeros Recursos",    desc:"100 recursos",          icon:"💰", cond:()=>totalResourcesEarned>=100, reward:20, unlocked:false },
+      { id:4, name:"Economía Automática",  desc:"1 recurso/s",           icon:"⚙️", cond:()=>resourcesPerSecond>=1, reward:100, unlocked:false },
+      { id:5, name:"Magnate",              desc:"1000 recursos",         icon:"💎", cond:()=>totalResourcesEarned>=1000,reward:200,unlocked:false },
+      { id:6, name:"Industrial",           desc:"Desbloquea todas mejoras",icon:"🏭",cond:()=>upgrades.every(u=>u.unlocked), reward:500, unlocked:false }
+    ];
+
+    // DOM
+    const resAmtE = document.getElementById('resource-amount'),
+          resSecE = document.getElementById('resource-per-second'),
+          clickArea = document.getElementById('clicker-area'),
+          upgradesSec = document.getElementById('upgrades-section'),
+          achGrid    = document.getElementById('achievements-grid'),
+          saveBtn    = document.getElementById('save-btn'),
+          resetBtn   = document.getElementById('reset-btn');
+
+    // Iniciar juego
+    function initGame(){
+      loadGame();
+      renderUpgrades();
+      renderAchievements();
+      updateDisplay();
+      clickArea.addEventListener('click', handleClick);
+      saveBtn.addEventListener('click', saveGame);
+      resetBtn.addEventListener('click', resetGame);
+      setInterval(gameLoop,1000);
+      setInterval(saveGame,30000); // autosave cada 30s
+    }
+
+    // Bucle cada segundo
+    function gameLoop(){
+      resources += resourcesPerSecond;
+      totalResourcesEarned += resourcesPerSecond;
+      checkUpgradeUnlocks();
+      checkAchievements();
+      updateDisplay();
+    }
+
+    // Clic principal
+    function handleClick(e){
+      resources += resourcesPerClick;
+      totalClicks++;
+      totalResourcesEarned += resourcesPerClick;
+      createClickEffect(e);
+      updateDisplay();
+    }
+
+    // Efecto visual
+    function createClickEffect(e){
+      const fx = document.createElement('div');
+      fx.className = 'click-effect';
+      fx.textContent = `+${resourcesPerClick}`;
+      const rect = clickArea.getBoundingClientRect();
+      fx.style.left = (e.clientX - rect.left) + 'px';
+      fx.style.top  = (e.clientY - rect.top) + 'px';
+      clickArea.appendChild(fx);
+      setTimeout(()=>fx.remove(),1000);
+    }
+
+    // Mostrar pantalla
+    function updateDisplay(){
+      resAmtE.textContent = Math.floor(resources);
+      resSecE.textContent = `${resourcesPerSecond.toFixed(1)} por segundo`;
+    }
+
+    // Renderizar mejoras
+    function renderUpgrades(){
+      upgradesSec.innerHTML = '';
+      upgrades.forEach(u=>{
+        if(!u.unlocked) return;
+        const cost = calculateCost(u);
+        const prod = calculateProd(u);
+        const div = document.createElement('div');
+        div.className = `upgrade ${u.unlocked?'unlocked':''}`;
+        div.innerHTML = `
+          <div class="upgrade-header">
+            <span class="upgrade-name">${u.name}</span>
+            <span class="upgrade-level">Nivel ${u.level}</span>
+          </div>
+          <div class="upgrade-description">${u.desc}</div>
+          <div class="upgrade-stats">
+            <span class="upgrade-cost">${cost} 💰</span>
+            <span class="upgrade-production">${prod}${u.id===1?'/clic':'/s'}</span>
+          </div>
+          <button class="upgrade-button" ${resources<cost?'disabled':''}>Comprar</button>
+        `;
+        const btn = div.querySelector('button');
+        btn.addEventListener('click',()=>buyUpgrade(u.id));
+        upgradesSec.appendChild(div);
+      });
+    }
+
+    // Comprar mejora
+    function buyUpgrade(id){
+      const u = upgrades.find(x=>x.id===id);
+      const cost = calculateCost(u);
+      if(resources<cost) return;
+      resources -= cost;
+      u.level++;
+      if(u.id===1) resourcesPerClick += u.baseProd;
+      else resourcesPerSecond += u.baseProd;
+      unlockNext(u.id);
+      renderUpgrades(); updateDisplay();
+    }
+
+    // Desbloquear siguiente mejora
+    function unlockNext(id){
+      const next = upgrades.find(x=>x.id===id+1);
+      if(next && !next.unlocked && upgrades.find(x=>x.id===id).level>=5){
+        next.unlocked = true;
+        showNotification(`Desbloqueada mejora: ${next.name}`);
+      }
+    }
+
+    // Verificar condiciones de unlock
+    function checkUpgradeUnlocks(){
+      upgrades.forEach(u=>{
+        if(!u.unlocked && resources>=calculateCost(u)*0.5){
+          u.unlocked = true;
+          showNotification(`Nueva mejora disponible: ${u.name}`);
+          renderUpgrades();
+        }
+      });
+    }
+
+    // Coste y producción
+    function calculateCost(u){ return Math.floor(u.baseCost*Math.pow(u.costMult,u.level)); }
+    function calculateProd(u){ return (u.id===1?u.baseProd*u.level: u.baseProd*u.level).toFixed(1); }
+
+    // Renderizar logros
+    function renderAchievements(){
+      achGrid.innerHTML = '';
+      achievements.forEach(a=>{
+        const div = document.createElement('div');
+        div.className = `achievement ${a.unlocked?'unlocked':''}`;
+        div.innerHTML = `<div class="achievement-icon">${a.icon}</div>
+          <div class="achievement-info">
+            <div class="achievement-name">${a.name}</div>
+            <div class="achievement-description">${a.desc}</div>
+          </div>`;
+        achGrid.appendChild(div);
+      });
+    }
+
+    // Verificar logros
+    function checkAchievements(){
+      let updated = false;
+      achievements.forEach(a=>{
+        if(!a.unlocked && a.cond()){
+          a.unlocked = true;
+          resources += a.reward;
+          totalResourcesEarned += a.reward;
+          showNotification(`¡Logro: ${a.name}! +${a.reward}`);
+          updated = true;
+        }
+      });
+      if(updated){
+        renderAchievements();
+        updateDisplay();
+      }
+    }
+
+    // Notificaciones
+    function showNotification(msg){
+      const n = document.createElement('div');
+      n.className = 'notification';
+      n.textContent = msg;
+      document.body.appendChild(n);
+      setTimeout(()=>n.remove(),3000);
+    }
+
+    // Guardar/Cargar
+    function saveGame(){
+      localStorage.setItem('clicker_save', JSON.stringify({
+        resources, resourcesPerClick, resourcesPerSecond,
+        totalClicks, totalResourcesEarned, upgrades, achievements
+      }));
+      showNotification('Juego guardado');
+    }
+    function loadGame(){
+      const data = JSON.parse(localStorage.getItem('clicker_save')||'null');
+      if(data){
+        resources = data.resources;
+        resourcesPerClick = data.resourcesPerClick;
+        resourcesPerSecond = data.resourcesPerSecond;
+        totalClicks = data.totalClicks;
+        totalResourcesEarned = data.totalResourcesEarned;
+        data.upgrades.forEach((u,i)=>upgrades[i].level=u.level,upgrades[i].unlocked=u.unlocked);
+        data.achievements.forEach((a,i)=>achievements[i].unlocked=a.unlocked);
+      }
+    }
+    function resetGame(){
+      localStorage.removeItem('clicker_save');
+      resources = resourcesPerClick = resourcesPerSecond = totalClicks = totalResourcesEarned = 0;
+      upgrades.forEach(u=>{u.level=0; u.unlocked = u.id<=2;});
+      achievements.forEach(a=>a.unlocked=false);
+      showNotification('Juego reiniciado');
+      initGame();
+    }
+
+    // Arrancar
+    window.addEventListener('DOMContentLoaded', initGame);
+  </script>
+</body>
+</html>
