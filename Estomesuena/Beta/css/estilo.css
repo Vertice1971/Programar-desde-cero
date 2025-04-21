@@ -1,0 +1,162 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #3c3f58;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+#menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100vh;
+}
+
+.seccion {
+  display: none;
+  padding: 20px;
+  max-width: 500px;
+  width: 100%;
+}
+
+h1, h2 {
+  text-align: center;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.boton-menu {
+  padding: 12px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  margin: 8px 0;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+}
+
+.boton-menu:hover {
+  background-color: #0056b3;
+}
+
+.field {
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+input[type="file"],
+input[type="number"],
+input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.time-inputs > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-inputs input[type="number"] {
+  width: 45%;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  background: #28a745;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+}
+
+button:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+
+#status {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+audio {
+  width: 100%;
+  margin: 10px 0;
+}
+
+#infoTurno,
+#resultado,
+#temporizador,
+#avisoSiguiente,
+#puntuaciones p {
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Nuevos estilos para botones de opciones */
+.opcion-boton {
+  width: 100%;
+  padding: 15px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  margin: 10px 0;
+  cursor: pointer;
+  transition: transform 0.1s ease-in-out, filter 0.2s ease-in-out;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+}
+
+.opcion-boton:nth-child(1) {
+  background-color: #1abc9c;
+}
+
+.opcion-boton:nth-child(2) {
+  background-color: #3498db;
+}
+
+.opcion-boton:nth-child(3) {
+  background-color: #e67e22;
+}
+
+.opcion-boton:hover {
+  filter: brightness(1.2);
+  transform: scale(1.03);
+}
+
+.opcion-boton:active,
+.opcion-boton:focus {
+  filter: brightness(1.4);
+}
