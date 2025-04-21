@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>FinalPong2025</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #menu {
+      text-align: center;
+    }
+    .menu-group {
+      margin-bottom: 15px;
+    }
+    .menu-group span {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 18px;
+    }
+    .menu-group button {
+      font-size: 18px;
+      margin: 0 5px;
+      padding: 8px 16px;
+      cursor: pointer;
+      background-color: #222;
+      border: 1px solid #fff;
+      color: white;
+      transition: background-color 0.3s;
+    }
+    .menu-group button.selected {
+      background-color: #555;
+    }
+    #startBtn {
+      font-size: 20px;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    #gameContainer {
+      display: none;
+      position: relative;
+    }
+    #backButton {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 16px;
+      padding: 5px 10px;
+      cursor: pointer;
+      z-index: 10;
+    }
+    #score {
+      font-size: 32px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    #timer {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      z-index: 10;
+    }
+    #gameCanvas {
+      border: 2px solid white;
+      background-color: black;
+      display: block;
+    }
+    #instructions {
+      font-size: 16px;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <h1>FinalPong2025</h1>
+    <div class="menu-group" id="modeGroup">
+      <span>Modo de juego:</span>
+      <button data-mode="single">Un Jugador</button>
+      <button data-mode="double">Dos Jugadores</button>
+      <button data-mode="laser">Modo Láser</button>
+    </div>
+    <div class="menu-group" id="timeGroup">
+      <span>Tiempo de partida:</span>
+      <button data-time="120">2 Minutos</button>
+      <button data-time="240">4 Minutos</button>
+    </div>
+    <div class="menu-group" id="pointsGroup">
+      <span>Límite de puntos:</span>
+      <button data-points="10">10 Puntos</button>
+      <button data-points="20">20 Puntos</button>
+    </div>
+    <button id="startBtn" disabled>Comenzar Partida</button>
+  </div>
+
+  <div id="gameContainer">
+    <button id="backButton">Volver al menú</button>
+    <div id="score">0 - 0</div>
+    <div id="timer">00:00</div>
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <div id="instructions">Jugador 1: W/S + Barra espaciadora (láser). Jugador 2: ↑/↓</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const menuDiv = document.getElementById('menu');
+    const gameContainer = document.getElementById('gameContainer');
+    const backButton = document.getElementById('backButton');
+    const scoreElement = document.getElementById('score');
+    const timerElement = document.getElementById('timer');
+    const startBtn = document.getElementById('startBtn');
+    const modeButtons = document.querySelectorAll('#modeGroup button');
+    const timeButtons = document.querySelectorAll('#timeGroup button');
+    const pointsButtons = document.querySelectorAll('#pointsGroup button');
+
+    const PADDLE_WIDTH = 10;
+    const PADDLE_HEIGHT = 100;
+    const BALL_RADIUS = 10;
+    const PADDLE_MARGIN = 10;
+    const LASER_COOLDOWN = 1000;
+    const LASER_SPEED = 10;
+    const LASER_LENGTH = 100;
+
+    const ballSpeedIncrement = 0.15;
+    const maxBallSpeed = 9;
+    const accelerationInterval = 10000;
+
+    let gameMode, timeLimit, pointLimit;
+    let userY, aiY, userSpeed, aiSpeed;
+    let ballX, ballY, ballSpeed, ballVelocityX, ballVelocityY, lastSpeedIncrease;
+    let playerScore, aiScore;
+    let startTime;
+    let laserActive = false;
+    let laserX = 0;
+    let laserY = 0; // ← NUEVO: trayectoria fija del láser
+    let lastLaserTime = 0;
+    let animationIdUpdate, animationIdRender;
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+    function beep(freq=440, dur=100, vol=0.2) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type='square'; osc.frequency.value=freq; gain.gain.value=vol;
+      osc.start(); osc.stop(audioCtx.currentTime + dur/1000);
+    }
+    function playReboundSound(){ beep(800,60); }
+    function playGoalSound(){ beep(200,100); setTimeout(() => beep(150,120),150); }
+    function playLaserSound(){ beep(1000,100,0.4); }
+
+    function allSelected() {
+      return gameMode && timeLimit && pointLimit;
+    }
+    function updateStartBtn() {
+      startBtn.disabled = !allSelected();
+    }
+    function selectOption(buttons, selected) {
+      buttons.forEach(b => b.classList.toggle('selected', b === selected));
+    }
+
+    modeButtons.forEach(btn => {
+      btn.onclick = () => {
+        gameMode = btn.dataset.mode;
+        selectOption(modeButtons, btn);
+        updateStartBtn();
+      };
+    });
+    timeButtons.forEach(btn => {
+      btn.onclick = () => {
+        timeLimit = parseInt(btn.dataset.time);
+        selectOption(timeButtons, btn);
+        updateStartBtn();
+      };
+    });
+    pointsButtons.forEach(btn => {
+      btn.onclick = () => {
+        pointLimit = parseInt(btn.dataset.points);
+        selectOption(pointsButtons, btn);
+        updateStartBtn();
+      };
+    });
+
+    function resetPaddles() {
+      userY = aiY = canvas.height/2 - PADDLE_HEIGHT/2;
+      userSpeed = aiSpeed = 0;
+    }
+    function resetBall() {
+      ballX = canvas.width/2;
+      ballY = canvas.height/2;
+      ballSpeed = 5;
+      ballVelocityX = (Math.random() > 0.5 ? 1 : -1) * ballSpeed;
+      ballVelocityY = (Math.random() * 4 - 2);
+      lastSpeedIncrease = Date.now();
+    }
+    function resetScores() {
+      playerScore = aiScore = 0;
+      scoreElement.textContent = `0 - 0`;
+    }
+
+    function shootLaser() {
+      const now = Date.now();
+      if (now - lastLaserTime >= LASER_COOLDOWN) {
+        lastLaserTime = now;
+        laserX = PADDLE_MARGIN + PADDLE_WIDTH;
+        laserY = userY + PADDLE_HEIGHT / 2; // ← trayectoria fijada al disparar
+        laserActive = true;
+        playLaserSound();
+      }
+    }
+
+    function handleCollision(paddleY, side) {
+      let collidePoint = (ballY - (paddleY + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2);
+      let angle = (Math.PI / 4) * collidePoint;
+      const dir = side === 'left' ? 1 : -1;
+      if (Math.abs(collidePoint) > 0.5 && ballSpeed < maxBallSpeed) ballSpeed += ballSpeedIncrement / 2;
+      ballVelocityX = dir * ballSpeed * Math.cos(angle);
+      ballVelocityY = ballSpeed * Math.sin(angle);
+      playReboundSound();
+    }
+
+    function update() {
+      const now = Date.now();
+      const elapsed = (now - startTime)/1000;
+      const remaining = Math.max(0, timeLimit - elapsed);
+      timerElement.textContent = `${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(Math.floor(remaining%60)).padStart(2,'0')}`;
+      if (remaining <= 0) return endGame();
+
+      if (now - lastSpeedIncrease > accelerationInterval && ballSpeed < maxBallSpeed) {
+        ballSpeed += ballSpeedIncrement;
+        const ang = Math.atan2(ballVelocityY, ballVelocityX);
+        ballVelocityX = Math.cos(ang) * ballSpeed * Math.sign(ballVelocityX);
+        ballVelocityY = Math.sin(ang) * ballSpeed;
+        lastSpeedIncrease = now;
+      }
+
+      userY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, userY + userSpeed));
+      if (gameMode === 'single' || gameMode === 'laser') {
+        let center = aiY + PADDLE_HEIGHT/2;
+        if (center < ballY - 10) aiY += 5;
+        else if (center > ballY + 10) aiY -= 5;
+        aiY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, aiY));
+      } else {
+        aiY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, aiY + aiSpeed));
+      }
+
+      const prevX = ballX;
+      ballX += ballVelocityX;
+      ballY += ballVelocityY;
+
+      if (ballY - BALL_RADIUS < 0 || ballY + BALL_RADIUS > canvas.height) {
+        ballVelocityY = -ballVelocityY;
+        ballY = Math.max(BALL_RADIUS, Math.min(canvas.height - BALL_RADIUS, ballY));
+        playReboundSound();
+      }
+
+      const uX = PADDLE_MARGIN + PADDLE_WIDTH;
+      if (ballVelocityX < 0 && prevX - BALL_RADIUS >= uX && ballX - BALL_RADIUS <= uX &&
+          ballY + BALL_RADIUS >= userY && ballY - BALL_RADIUS <= userY + PADDLE_HEIGHT) {
+        ballX = uX + BALL_RADIUS;
+        handleCollision(userY, 'left');
+      }
+
+      const aX = canvas.width - PADDLE_MARGIN - PADDLE_WIDTH;
+      if (ballVelocityX > 0 && prevX + BALL_RADIUS <= aX && ballX + BALL_RADIUS >= aX &&
+          ballY + BALL_RADIUS >= aiY && ballY - BALL_RADIUS <= aiY + PADDLE_HEIGHT) {
+        ballX = aX - BALL_RADIUS;
+        handleCollision(aiY, 'right');
+      }
+
+      if (ballX < 0) { aiScore++; updateScore(); resetBall(); checkPoints(); playGoalSound(); }
+      else if (ballX > canvas.width) { playerScore++; updateScore(); resetBall(); checkPoints(); playGoalSound(); }
+
+      if (gameMode === 'laser' && laserActive) {
+        laserX += LASER_SPEED;
+        if (
+          ballX >= laserX && ballX <= laserX + LASER_LENGTH &&
+          Math.abs(ballY - laserY) <= BALL_RADIUS
+        ) {
+          playerScore++;
+          updateScore();
+          resetBall();
+          playGoalSound();
+          laserActive = false;
+          checkPoints();
+        }
+        if (laserX > canvas.width) laserActive = false;
+      }
+
+      animationIdUpdate = requestAnimationFrame(update);
+    }
+
+    function render() {
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'white';
+      ctx.setLineDash([10, 10]);
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0);
+      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'white';
+      ctx.fillRect(PADDLE_MARGIN, userY, PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.fillRect(canvas.width - PADDLE_MARGIN - PADDLE_WIDTH, aiY, PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.beginPath();
+      ctx.arc(ballX, ballY, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (gameMode === 'laser' && laserActive) {
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(laserX, laserY); // ← Usa la altura fija
+        ctx.lineTo(laserX + LASER_LENGTH, laserY);
+        ctx.stroke();
+      }
+
+      animationIdRender = requestAnimationFrame(render);
+    }
+
+    function updateScore() {
+      scoreElement.textContent = `${playerScore} - ${aiScore}`;
+    }
+
+    function startGame() {
+      menuDiv.style.display = 'none';
+      gameContainer.style.display = 'block';
+      resetScores();
+      resetPaddles();
+      resetBall();
+      startTime = Date.now();
+      update();
+      render();
+    }
+
+    function stopGame() {
+      cancelAnimationFrame(animationIdUpdate);
+      cancelAnimationFrame(animationIdRender);
+      gameContainer.style.display = 'none';
+      menuDiv.style.display = 'block';
+    }
+
+    function endGame() {
+      alert(`Fin de la partida! Resultado: ${playerScore} - ${aiScore}`);
+      stopGame();
+    }
+
+    function checkPoints() {
+      if (playerScore >= pointLimit || aiScore >= pointLimit) endGame();
+    }
+
+    backButton.onclick = stopGame;
+    startBtn.onclick = startGame;
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'w') userSpeed = -8;
+      if (e.key.toLowerCase() === 's') userSpeed = 8;
+      if (gameMode === 'double') {
+        if (e.key === 'ArrowUp') aiSpeed = -8;
+        if (e.key === 'ArrowDown') aiSpeed = 8;
+      }
+      if (gameMode === 'laser' && e.code === 'Space') shootLaser();
+    });
+
+    document.addEventListener('keyup', e => {
+      if (['w', 's'].includes(e.key.toLowerCase())) userSpeed = 0;
+      if (['ArrowUp', 'ArrowDown'].includes(e.key)) aiSpeed = 0;
+    });
+  </script>
+</body>
+</html>
