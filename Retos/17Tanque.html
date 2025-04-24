@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tanque Artillero </title>
+  <!-- Tomás Cuesta tomcue@iesjuandelacierva.com -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body { font-family: 'Arial', sans-serif; background: linear-gradient(to bottom, #87CEEB, #1E90FF); min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    h1 { margin: 10px; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); font-size: clamp(1.5rem, 4vw, 2.5rem); }
+    #setup-panel { background: rgba(0,0,0,0.7); color: #fff; padding: 20px; border-radius: 10px; width: min(90vw, 400px); margin-bottom: 10px; }
+    #setup-panel label { display: block; margin-bottom: 5px; font-size: 1.1rem; }
+    #setup-panel input { width: 100%; padding: 8px; border-radius: 5px; border: none; margin-bottom: 10px; }
+    #setup-panel button { width: 100%; padding: 10px; background: #4CAF50; color: #fff; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer; }
+    #setup-panel button:hover { background: #45a049; }
+    #game-container { position: relative; width: min(90vw, 800px); height: min(60vh, 500px); background: linear-gradient(to bottom, #32CD32, #228B22); border: 3px solid #333; border-radius: 10px; overflow: hidden; margin-bottom: 0; display: none; }
+    .terrain { position: absolute; bottom: 0; width: 100%; height: 20px; background: #8B4513; }
+    #info-panel, #wind-display { position: absolute; padding: 8px; border-radius: 5px; background: rgba(0,0,0,0.5); color: #fff; text-shadow: 1px 1px 2px #000; font-size: clamp(0.8rem, 2vw, 1rem); z-index: 100; }
+    #info-panel { top: 10px; left: 10px; }
+    #wind-display { top: 10px; right: 10px; }
+    .tank { position: absolute; bottom: 20px; width: 80px; height: 50px; border-radius: 10px 10px 0 0; display: flex; align-items: center; justify-content: center; z-index: 5; }
+    .tank-body { width: 100%; height: 100%; position: relative; overflow: hidden; border-radius: 10px 10px 0 0; }
+    .tank-health { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; background: #4CAF50; transition: height .3s, background .3s; }
+    .tank-cannon { position: absolute; bottom: 40px; left: 40px; width: 40px; height: 8px; background: #696969; transform-origin: 0% 50%; border-radius: 3px; }
+    .bullet { position: absolute; width: 10px; height: 10px; background: #000; border-radius: 50%; z-index: 10; }
+    .explosion { position: absolute; width: 50px; height: 50px; background: radial-gradient(circle, yellow, orange, red); border-radius: 50%; animation: explode .5s forwards; z-index: 15; }
+    @keyframes explode { 0% { transform: scale(0); opacity:1; } 100% { transform: scale(3); opacity:0; } }
+    .target { position: absolute; bottom: 20px; width: 40px; height: 60px; background: #8B0000; border-radius: 5px 5px 0 0; z-index: 4; }
+    #game-over { display: none; position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: #fff; padding: 20px; border-radius: 10px; text-align: center; width: 80%; max-width: 400px; z-index: 200; }
+    #game-over button { margin-top: 15px; padding: 10px 20px; background: #4CAF50; border: none; border-radius: 5px; color: #fff; cursor: pointer; }
+    #controls-panel { display: none; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; margin-top: 10px; width: min(90vw,800px); display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+    .control-group { display: flex; align-items: center; gap: 5px; }
+    .control-group label { color: #fff; font-size: 1rem; min-width: 60px; }
+    .control-group input[type="range"] { width: 150px; }
+    .control-group span { color: #fff; width: 30px; text-align: center; }
+    #fire-btn { padding: 8px 20px; background: #f44336; border: none; border-radius: 5px; color: #fff; font-weight: bold; cursor: pointer; }
+    #fire-btn:disabled { background: #777; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <h1>Tanque Artillero</h1>
+  <h2 style="font-size: 0.75rem;">Tomás Cuesta</h2>
+
+  <div id="setup-panel">
+    <label for="ammo-input">Munición (1-30):</label>
+    <input type="number" id="ammo-input" min="1" max="30" value="15">
+    <button id="start-btn">Comenzar Juego</button>
+  </div>
+
+  <div id="game-container">
+    <div id="info-panel">
+      <div id="score-display">Puntuación: 0</div>
+      <div id="shots-display">Disparos: 0/15</div>
+      <div id="timer-display">Tiempo: 60s</div>
+    </div>
+    <div id="wind-display">Viento: 0.0 m/s</div>
+    <!-- Tanque del jugador -->
+    <!-- Se creará dinámicamente con la clase Tank -->
+    <div class="terrain"></div>
+    <div id="game-over">
+      <h2>¡JUEGO TERMINADO!</h2>
+      <p id="final-score">Puntuación: 0</p>
+      <button id="restart-btn">Jugar de nuevo</button>
+    </div>
+  </div>
+
+  <div id="controls-panel">
+    <div class="control-group">
+      <label for="angle-slider">Ángulo:</label>
+      <input type="range" id="angle-slider" min="0" max="90" value="45">
+      <span id="angle-value">45°</span>
+    </div>
+    <div class="control-group">
+      <label for="power-slider">Potencia:</label>
+      <input type="range" id="power-slider" min="10" max="100" value="50">
+      <span id="power-value">50%</span>
+    </div>
+    <button id="fire-btn">DISPARAR</button>
+  </div>
+
+  <script>
+    // Constantes físicas y de juego
+    const GRAVITY               = 0.15;
+    const AIR_RESISTANCE        = 0.005;
+    const WIND_SCALING_FACTOR   = 0.08;
+    const BULLET_SPEED_BASE     = 4;
+    const BULLET_SPEED_POWER_SCALE = 10;
+    const TERRAIN_HEIGHT        = 20;
+    const TARGET_SCORE          = 10;
+    const INITIAL_TIME          = 60;
+    const TARGETS_PER_ROUND     = 3;
+    const INITIAL_AMMO_MIN      = 1;
+    const INITIAL_AMMO_MAX      = 30;
+    const INITIAL_AMMO_DEFAULT  = 15;
+
+    // AudioManager (sin cambios)
+    class AudioManager {
+      constructor() {
+        this.audioContext = null;
+        this.isInitialized = false;
+        document.body.addEventListener('click', this.initContext.bind(this), { once: true });
+        document.body.addEventListener('touchstart', this.initContext.bind(this), { once: true });
+      }
+      initContext() {
+        if (this.isInitialized) return;
+        try {
+          this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          if (this.audioContext.state === 'suspended') this.audioContext.resume();
+          this.isInitialized = true;
+        } catch (e) {
+          alert("Audio no soportado. El juego funcionará sin sonido.");
+        }
+      }
+      playSound(type) {
+        if (!this.isInitialized || !this.audioContext) {
+          if (!this.isInitialized) this.initContext();
+          if (!this.isInitialized || !this.audioContext) return;
+        }
+        if (this.audioContext.state === 'suspended') this.audioContext.resume();
+        const now = this.audioContext.currentTime;
+        let osc, gain, noise, filter, bufSize, bufData;
+        switch(type) {
+          case 'fire':
+            osc = this.audioContext.createOscillator();
+            gain = this.audioContext.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(700, now);
+            osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.connect(gain); gain.connect(this.audioContext.destination);
+            osc.start(now); osc.stop(now + 0.1);
+            break;
+          case 'explosion':
+            bufSize = this.audioContext.sampleRate * 0.4;
+            let noiseBuf = this.audioContext.createBuffer(1, bufSize, this.audioContext.sampleRate);
+            bufData = noiseBuf.getChannelData(0);
+            for (let i = 0; i < bufSize; i++) bufData[i] = Math.random() * 2 - 1;
+            noise = this.audioContext.createBufferSource();
+            noise.buffer = noiseBuf;
+            filter = this.audioContext.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1200, now);
+            filter.frequency.exponentialRampToValueAtTime(150, now + 0.4);
+            gain = this.audioContext.createGain();
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            noise.connect(filter); filter.connect(gain); gain.connect(this.audioContext.destination);
+            noise.start(now); noise.stop(now + 0.4);
+            break;
+          default:
+            return;
+        }
+      }
+    }
+
+    // Clases del juego
+    class Tank {
+      constructor(x, color) {
+        this.x = x;
+        this.health = 100;
+        this.el = document.createElement('div');
+        this.el.className = 'tank';
+        this.el.style.left = `${x}px`;
+        this.el.style.background = color;
+        this.el.innerHTML = `
+          <div class="tank-body"><div class="tank-health"></div></div>
+          <div id="player-cannon" class="tank-cannon"></div>
+        `;
+        gameContainer.appendChild(this.el);
+        this.cannon = this.el.querySelector('.tank-cannon');
+        this.healthEl = this.el.querySelector('.tank-health');
+        this.updateHealth();
+      }
+      setAngle(a) {
+        this.cannon.style.transform = `rotate(${-a}deg)`;
+      }
+      updateHealth() {
+        this.healthEl.style.height = `${this.health}%`;
+        let color;
+        if (this.health > 75) color = '#4CAF50';      // >75% verde
+        else if (this.health > 50) color = '#FFEB3B'; // >50% amarillo claro
+        else if (this.health > 25) color = '#FFC107'; // >25% ámbar
+        else if (this.health > 0)  color = '#FF5722'; // >0% naranja rojizo
+        else                     color = '#FF0000';  // 0% rojo ardiente
+        this.healthEl.style.background = color;
+      }
+      getHitbox() {
+        return {
+          x: this.el.offsetLeft,
+          y: this.el.offsetTop,
+          width: this.el.clientWidth,
+          height: this.el.clientHeight
+        };
+      }
+      destroy() {
+        if (this.el.parentNode) gameContainer.removeChild(this.el);
+      }
+      getCannonTipPosition() {
+        const angleDeg = parseInt(angleSlider.value) || 0;
+        const angleRad = -angleDeg * Math.PI/180;
+        const cannonLength = this.cannon.offsetWidth  || 40;
+        const cannonHeight = this.cannon.offsetHeight || 8;
+        const pivotX = this.el.offsetLeft + this.cannon.offsetLeft;
+        const pivotY = this.el.offsetTop + this.cannon.offsetTop + (cannonHeight/2);
+        return {
+          x: pivotX + cannonLength * Math.cos(angleRad),
+          y: pivotY + cannonLength * Math.sin(angleRad)
+        };
+      }
+    }
+
+    class Bullet {
+      constructor(x, y, angle, power, wind) {
+        this.x = x; this.y = y;
+        this.angle = angle;
+        this.power = power; this.wind = wind;
+        this.vel = this.calcVelocity(); this.active = true;
+        this.el = document.createElement('div');
+        this.el.className = 'bullet';
+        gameContainer.appendChild(this.el);
+        this.updateElementPosition();
+      }
+      calcVelocity() {
+        const r = this.angle * Math.PI/180;
+        const speed = BULLET_SPEED_BASE + (this.power/100)*BULLET_SPEED_POWER_SCALE;
+        return { x: Math.cos(r)*speed, y: -Math.sin(r)*speed };
+      }
+      update(dt) {
+        if (!this.active) return;
+        dt = Math.min(dt, 0.05);
+        this.vel.y += GRAVITY;
+        const sp = Math.hypot(this.vel.x, this.vel.y);
+        const rf = AIR_RESISTANCE * sp * sp;
+        if (sp > 0.01) {
+          this.vel.x -= (rf * this.vel.x / sp)*dt;
+          this.vel.y -= (rf * this.vel.y / sp)*dt;
+        }
+        this.vel.x += this.wind * dt;
+        this.x += this.vel.x; this.y += this.vel.y;
+        this.updateElementPosition();
+        if (this.x < -10 || this.x > gameContainer.clientWidth + 10 || this.y > gameContainer.clientHeight + 10) {
+          this.destroy();
+        }
+      }
+      updateElementPosition() {
+        this.el.style.left = `${this.x - this.el.offsetWidth/2}px`;
+        this.el.style.top  = `${this.y - this.el.offsetHeight/2}px`;
+      }
+      destroy() {
+        if (!this.active) return;
+        this.active = false;
+        if (this.el.parentNode === gameContainer) gameContainer.removeChild(this.el);
+      }
+    }
+
+    class Target {
+      constructor(x) {
+        this.x = x; this.active = true;
+        this.el = document.createElement('div');
+        this.el.className = 'target';
+        this.el.style.left = `${x}px`;
+        gameContainer.appendChild(this.el);
+      }
+      destroy() {
+        if (!this.active) return;
+        this.active = false;
+        if (this.el.parentNode) gameContainer.removeChild(this.el);
+      }
+      getHitbox() {
+        return {
+          x: this.el.offsetLeft,
+          y: this.el.offsetTop,
+          width: this.el.clientWidth,
+          height: this.el.clientHeight
+        };
+      }
+    }
+
+    class Explosion {
+      constructor(x, y) {
+        this.el = document.createElement('div');
+        this.el.className = 'explosion';
+        this.el.style.left = `${x-25}px`;
+        this.el.style.top  = `${y-25}px`;
+        gameContainer.appendChild(this.el);
+        setTimeout(() => {
+          if (this.el.parentNode) gameContainer.removeChild(this.el);
+        }, 500);
+      }
+    }
+
+    // Referencias DOM
+    let setupPanel       = document.getElementById('setup-panel');
+    let gameContainer    = document.getElementById('game-container');
+    let controlsPanel    = document.getElementById('controls-panel');
+    let startBtn         = document.getElementById('start-btn');
+    let ammoInput        = document.getElementById('ammo-input');
+    let scoreDisplay     = document.getElementById('score-display');
+    let shotsDisplay     = document.getElementById('shots-display');
+    let timerDisplay     = document.getElementById('timer-display');
+    let windDisplay      = document.getElementById('wind-display');
+    let angleSlider      = document.getElementById('angle-slider');
+    let powerSlider      = document.getElementById('power-slider');
+    let angleValue       = document.getElementById('angle-value');
+    let powerValue       = document.getElementById('power-value');
+    let fireBtn          = document.getElementById('fire-btn');
+    let gameOverScreen   = document.getElementById('game-over');
+    let finalScoreDisplay= document.getElementById('final-score');
+    let restartBtn       = document.getElementById('restart-btn');
+
+    // Variables de juego
+    let audioManager, playerTank;
+    let bullets = [], targets = [];
+    let score = 0, shotsFired = 0, maxShots = INITIAL_AMMO_DEFAULT;
+    let timeRemaining = INITIAL_TIME, gameActive = false;
+    let windForceBase = 0, lastTime = 0;
+    let animationFrameId, timerInterval;
+
+    function initGame() {
+      // Reset controles
+      angleSlider.replaceWith(angleSlider.cloneNode(true));
+      powerSlider.replaceWith(powerSlider.cloneNode(true));
+      fireBtn.replaceWith(fireBtn.cloneNode(true));
+      angleSlider = document.getElementById('angle-slider');
+      powerSlider = document.getElementById('power-slider');
+      fireBtn    = document.getElementById('fire-btn');
+
+      maxShots = parseInt(ammoInput.value);
+      if (isNaN(maxShots) || maxShots < INITIAL_AMMO_MIN || maxShots > INITIAL_AMMO_MAX) {
+        maxShots = INITIAL_AMMO_DEFAULT;
+        ammoInput.value = INITIAL_AMMO_DEFAULT;
+      }
+
+      setupPanel.style.display    = 'none';
+      gameContainer.style.display = 'block';
+      controlsPanel.style.display = 'flex';
+
+      if (!audioManager) audioManager = new AudioManager();
+
+      score = 0; shotsFired = 0; timeRemaining = INITIAL_TIME; gameActive = true;
+
+      bullets.forEach(b => b.destroy());
+      bullets = [];
+      targets.forEach(t => t.destroy());
+      targets = [];
+      document.querySelectorAll('.explosion').forEach(e => e.remove());
+
+      if (playerTank) playerTank.destroy();
+      playerTank = new Tank(50, '#556B2F');
+      playerTank.setAngle(parseInt(angleSlider.value));
+
+      createTargets(TARGETS_PER_ROUND);
+
+      windForceBase = Math.random() * 2 - 1;
+      updateWind();
+
+      updateScore();
+      updateShots();
+      updateTimerDisplay();
+      playerTank.updateHealth();
+
+      fireBtn.disabled = false;
+
+      setupControls();
+
+      clearInterval(timerInterval);
+      timerInterval = setInterval(updateGameTimer, 1000);
+
+      lastTime = performance.now();
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      gameLoop(lastTime);
+    }
+
+    function setupControls() {
+      angleSlider.addEventListener('input', handleControlInput);
+      powerSlider.addEventListener('input', handleControlInput);
+      fireBtn.addEventListener('click', fireBullet);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.addEventListener('keydown', handleKeyDown);
+      handleControlInput({ target: angleSlider });
+      handleControlInput({ target: powerSlider });
+    }
+
+    function handleControlInput(e) {
+      if (!playerTank) return;
+      const input = e.target, val = parseInt(input.value);
+      if (input.id === 'angle-slider') {
+        angleValue.textContent = `${val}°`;
+        playerTank.setAngle(val);
+      } else {
+        powerValue.textContent = `${val}%`;
+      }
+    }
+
+    function handleKeyDown(e) {
+      if (!gameActive || !playerTank) return;
+      let slider, step;
+      switch (e.key) {
+        case 'ArrowUp':    slider = angleSlider; step = 1; break;
+        case 'ArrowDown':  slider = angleSlider; step = -1; break;
+        case 'ArrowRight': slider = powerSlider; step = 2; break;
+        case 'ArrowLeft':  slider = powerSlider; step = -2; break;
+        case ' ': case 'Enter':
+          e.preventDefault();
+          fireBullet();
+          return;
+        default: return;
+      }
+      e.preventDefault();
+      let cur = parseInt(slider.value);
+      let nxt = Math.max(parseInt(slider.min), Math.min(parseInt(slider.max), cur + step));
+      slider.value = nxt;
+      slider.dispatchEvent(new Event('input'));
+    }
+
+    function createTargets(n) {
+      targets.forEach(t => t.destroy());
+      targets = [];
+      const W = gameContainer.clientWidth;
+      const tankEdge = playerTank.el.offsetLeft + playerTank.el.clientWidth;
+      const minX = tankEdge + 100, maxX = W - 60;
+      if (minX >= maxX) return console.warn("Espacio insuficiente para objetivos.");
+      for (let i = 0; i < n; i++) {
+        let x, tries = 0;
+        do {
+          x = Math.random() * (maxX - minX) + minX;
+          tries++;
+        } while (targets.some(t => Math.abs(t.x - x) < t.el.clientWidth + 10) && tries < 10);
+        targets.push(new Target(x));
+      }
+    }
+
+    function fireBullet() {
+      if (!gameActive || shotsFired >= maxShots || bullets.some(b => b.active)) return;
+      const a = parseInt(angleSlider.value), p = parseInt(powerSlider.value);
+      const start = playerTank.getCannonTipPosition();
+      const windEff = windForceBase * WIND_SCALING_FACTOR;
+      bullets.push(new Bullet(start.x, start.y, a, p, windEff));
+      audioManager.playSound('fire');
+      shotsFired++;
+      updateShots();
+      if (shotsFired >= maxShots) fireBtn.disabled = true;
+    }
+
+    function checkCollisions() {
+      const ground = gameContainer.clientHeight - TERRAIN_HEIGHT;
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i]; if (!b.active) continue;
+        const pos = { x: b.x, y: b.y }, r = (b.el.offsetWidth||10)/2;
+
+        // Daño al fuselaje si la bala sale a 90° y vuelve al tanque
+        if (b.angle === 90) {
+          const t = playerTank.getHitbox();
+          if (pos.x + r > t.x && pos.x - r < t.x + t.width &&
+              pos.y + r > t.y && pos.y - r < t.y + t.height) {
+            new Explosion(pos.x, pos.y);
+            b.destroy();
+            playerTank.health = Math.max(0, playerTank.health - 25);
+            playerTank.updateHealth();
+            if (playerTank.health <= 0) endGame();
+            continue;
+          }
+        }
+
+        // Colisión con el suelo
+        if (pos.y + r >= ground) {
+          new Explosion(pos.x, ground);
+          b.destroy();
+          continue;
+        }
+
+        // Colisión con objetivos
+        let hit = false;
+        for (let j = targets.length - 1; j >= 0; j--) {
+          const t = targets[j]; if (!t.active) continue;
+          const h = t.getHitbox();
+          if (pos.x + r > h.x && pos.x - r < h.x + h.width &&
+              pos.y + r > h.y && pos.y - r < h.y + h.height) {
+            new Explosion(pos.x, pos.y);
+            t.destroy(); b.destroy();
+            score += TARGET_SCORE; updateScore();
+            hit = true;
+            break;
+          }
+        }
+        if (hit) {
+          if (targets.every(t => !t.active)) {
+            targets = targets.filter(t => t.active);
+            setTimeout(() => { if (gameActive) createTargets(TARGETS_PER_ROUND); }, 500);
+          }
+          continue;
+        }
+      }
+      bullets = bullets.filter(b => b.active);
+    }
+
+    function updateScore()       { scoreDisplay.textContent = `Puntuación: ${score}`; }
+    function updateShots()       { shotsDisplay.textContent = `Disparos: ${shotsFired}/${maxShots}`; }
+    function updateTimerDisplay(){ timerDisplay.textContent = `Tiempo: ${timeRemaining}s`; }
+    function updateWind() {
+      const w = (windForceBase * 10).toFixed(1);
+      const dir = windForceBase > 0.05 ? '→' : (windForceBase < -0.05 ? '←' : '');
+      windDisplay.innerHTML = `Viento: ${dir} ${Math.abs(w)} m/s`;
+    }
+
+    function updateGameTimer() {
+      if (!gameActive) return;
+      timeRemaining--;
+      updateTimerDisplay();
+      if (timeRemaining <= 0) endGame();
+    }
+
+    function gameLoop(t) {
+      if (!gameActive) return;
+      const dt = (t - lastTime) / 1000;
+      lastTime = t;
+      bullets.forEach(b => { if (b.active) b.update(dt); });
+      checkCollisions();
+      animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function endGame() {
+      if (!gameActive) return;
+      gameActive = false;
+      clearInterval(timerInterval);
+      cancelAnimationFrame(animationFrameId);
+      fireBtn.disabled = true;
+      finalScoreDisplay.textContent = `Puntuación: ${score}`;
+      gameOverScreen.style.display = 'block';
+      bullets.forEach(b => b.destroy());
+      bullets = [];
+    }
+
+    function resetGame() {
+      gameOverScreen.style.display    = 'none';
+      setupPanel.style.display        = 'block';
+      gameContainer.style.display     = 'none';
+      controlsPanel.style.display     = 'none';
+      targets.forEach(t => t.destroy());
+      targets = [];
+      if (playerTank) playerTank.destroy();
+      playerTank = null;
+      document.querySelectorAll('.bullet').forEach(b => b.remove());
+      bullets = [];
+      score = 0; shotsFired = 0; timeRemaining = INITIAL_TIME;
+      fireBtn.disabled = false;
+    }
+
+    // Listeners iniciales
+    startBtn.addEventListener('click', () => {
+      if (audioManager && !audioManager.isInitialized) audioManager.initContext();
+      initGame();
+    });
+    restartBtn.addEventListener('click', resetGame);
+
+    // Setup Audio y UI inicial
+    audioManager = new AudioManager();
+    angleValue.textContent = `${angleSlider.value}°`;
+    powerValue.textContent = `${powerSlider.value}%`;
+  </script>
+</body>
+</html>
