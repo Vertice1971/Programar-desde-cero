@@ -1,0 +1,32 @@
+{
+  "preguntas": [
+    {
+      "texto": "Sócrates fue maestro de Platón.",
+      "respuesta": true
+    },
+    {
+      "texto": "Sócrates dejó escritos filosóficos importantes.",
+      "respuesta": false
+    },
+    {
+      "texto": "Sócrates fue condenado a muerte por corrupción de la juventud y por impiedad.",
+      "respuesta": true
+    },
+    {
+      "texto": "Sócrates nació en Atenas en el siglo V a.C.",
+      "respuesta": true
+    },
+    {
+      "texto": "Sócrates creía que la sabiduría consistía en reconocer la propia ignorancia.",
+      "respuesta": true
+    },
+    {
+      "texto": "El oráculo de Delfos declaró que Sócrates era el hombre más sabio de Atenas.",
+      "respuesta": true
+    },
+    {
+      "texto": "La principal fuente de conocimiento sobre Sócrates proviene de los diálogos escritos por Aristóteles.",
+      "respuesta": false
+    }
+  ]
+}
