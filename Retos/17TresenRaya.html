@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tres en Raya con IA</title>
+  <!-- Autor: Tomás Cuesta | Contacto: tomcue@iesjuandelacierva.com -->
+  <style>
+    :root {
+      --primary: #3498db;
+      --primary-dark: #2980b9;
+      --secondary: #95a5a6;
+      --secondary-dark: #7f8c8d;
+      --bg-start: #f5f7fa;
+      --bg-end: #c3cfe2;
+      --cell-size: 80px;
+      --hover-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
+    }
+    body {
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+      color: #333;
+    }
+    .container {
+      width: 100%; max-width: 500px; padding: 20px; text-align: center;
+    }
+    .menu, .game-container {
+      background: white; border-radius: 10px; padding: 25px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: all 0.3s ease;
+    }
+    .menu h1::after, .game-container h1::after {
+      content: "Tomás Cuesta";
+      display: block;
+      font-size: 0.4em;
+      color: #888;
+      margin-top: 5px;
+    }
+
+    .difficulty-option {
+      background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px;
+      padding: 15px; margin: 10px 0; cursor: pointer; transition: all 0.2s ease;
+      text-align: left;
+    }
+    .difficulty-option:hover {
+      background: #e9ecef; transform: translateY(-2px); box-shadow: var(--hover-shadow);
+    }
+    .difficulty-option.selected {
+      border-color: var(--primary); background: #e3f2fd;
+    }
+    .btn {
+      background: var(--primary); color: white; border: none;
+      padding: 12px 20px; border-radius: 6px; cursor: pointer;
+      font-size: 1em; margin-top: 15px; transition: all 0.2s ease;
+    }
+    .btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: var(--hover-shadow); }
+    .btn-secondary { background: var(--secondary); }
+    .btn-secondary:hover { background: var(--secondary-dark); }
+    .game-info { margin-bottom: 10px; font-size: 1.2em; min-height: 24px; }
+    .scoreboard { margin-bottom: 10px; font-size: 1em; }
+    .board {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      margin: 20px auto; max-width: 300px;
+    }
+    .cell {
+      width: 100%; height: var(--cell-size); background: #f8f9fa;
+      border: 2px solid #e9ecef; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5em; cursor: pointer; transition: all 0.2s ease;
+      outline: none;
+    }
+    .cell:hover, .cell:focus {
+      background: #e9ecef; transform: translateY(-1px); box-shadow: var(--hover-shadow);
+    }
+    .cell.x { color: #e74c3c; }
+    .cell.o { color: #2ecc71; }
+    .cell.winner { background: #fffacd; animation: pulse 0.5s infinite alternate; }
+    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+    .thinking { animation: pulse 1s infinite; }
+    @media (max-width: 500px) {
+      .container { padding: 10px; }
+      .menu, .game-container { padding: 15px; }
+      .cell { height: 70px; font-size: 2em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="menu" id="menu">
+      <h1>TRES EN RAYA</h1>
+      <h2>Configuración</h2>
+      <div>
+        <label><input type="radio" name="symbol" value="X" checked> Tú juegas con X</label>
+        <label><input type="radio" name="symbol" value="O"> Tú juegas con O</label>
+      </div>
+      <div>
+        <label><input type="radio" name="start" value="player" checked> Tú comienzas</label>
+        <label><input type="radio" name="start" value="ai"> IA comienza</label>
+      </div>
+      <h2>Dificultad IA</h2>
+      <div class="difficulty-option" data-difficulty="random">
+        <strong>Fácil (Aleatoria)</strong>
+        <div class="difficulty-description">La IA juega al azar.</div>
+      </div>
+      <div class="difficulty-option selected" data-difficulty="heuristic">
+        <strong>Intermedia (Heurística)</strong>
+        <div class="difficulty-description">Bloquea y prioriza el centro.</div>
+      </div>
+      <div class="difficulty-option" data-difficulty="minimax">
+        <strong>Difícil (Minimax)</strong>
+        <div class="difficulty-description">IA invencible (alpha-beta).</div>
+      </div>
+      <button class="btn" id="start-btn">Comenzar Juego</button>
+      <button class="btn" id="joshua-btn">Joshua vs WOPR</button>
+    </div>
+
+    <div class="game-container" id="game-container" style="display:none;">
+      <h1>TRES EN RAYA</h1>
+      <div id="game-info" class="game-info" aria-live="polite" aria-atomic="true">Tu turno</div>
+      <div id="scoreboard" class="scoreboard">Jugador: 0 | IA: 0 | Empates: 0</div>
+      <div class="board" id="board">
+        <div class="cell" data-index="0" role="button" tabindex="0"></div>
+        <div class="cell" data-index="1" role="button" tabindex="0"></div>
+        <div class="cell" data-index="2" role="button" tabindex="0"></div>
+        <div class="cell" data-index="3" role="button" tabindex="0"></div>
+        <div class="cell" data-index="4" role="button" tabindex="0"></div>
+        <div class="cell" data-index="5" role="button" tabindex="0"></div>
+        <div class="cell" data-index="6" role="button" tabindex="0"></div>
+        <div class="cell" data-index="7" role="button" tabindex="0"></div>
+        <div class="cell" data-index="8" role="button" tabindex="0"></div>
+      </div>
+      <div class="game-controls">
+        <button class="btn btn-secondary" id="menu-btn">Menú Principal</button>
+        <button class="btn" id="restart-btn">Reiniciar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WIN_COMBOS = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    class TicTacToe {
+      constructor() {
+        // AudioContext para beeps
+        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        this.state = {
+          board: Array(9).fill(''),
+          playerSymbol: 'X',
+          aiSymbol: 'O',
+          currentPlayer: 'player',
+          aiDifficulty: 'heuristic',
+          gameActive: false,
+          scores: { player: 0, ai: 0, draws: 0 },
+          aiVsAiMode: false,
+          aiVsAiScores: { joshua: 0, wopr: 0, draws: 0 }
+        };
+        this.menuEl = document.getElementById('menu');
+        this.gameEl = document.getElementById('game-container');
+        this.infoEl = document.getElementById('game-info');
+        this.scoreEl = document.getElementById('scoreboard');
+        this.boardEl = document.getElementById('board');
+        this.startBtn = document.getElementById('start-btn');
+        this.joshuaBtn = document.getElementById('joshua-btn');
+        this.restartBtn = document.getElementById('restart-btn');
+        this.menuBtn = document.getElementById('menu-btn');
+        this.diffOptions = document.querySelectorAll('.difficulty-option');
+        this.cells = Array.from(this.boardEl.children);
+        this.bindEvents();
+      }
+
+      bindEvents() {
+        this.startBtn.addEventListener('click', () => this.start(false));
+        this.joshuaBtn.addEventListener('click', () => this.start(true));
+        this.restartBtn.addEventListener('click', () => this.reset(true));
+        this.menuBtn.addEventListener('click', () => this.showMenu());
+
+        this.diffOptions.forEach(opt => {
+          opt.addEventListener('click', () => {
+            this.diffOptions.forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+            this.state.aiDifficulty = opt.dataset.difficulty;
+          });
+        });
+
+        this.cells.forEach(cell => {
+          cell.addEventListener('click', () => this.handleMove(cell));
+        });
+
+        document.addEventListener('keydown', e => {
+          if (!this.state.gameActive || this.state.aiVsAiMode) return;
+          if (e.key >= '1' && e.key <= '9' && this.state.currentPlayer === 'player') {
+            const idx = parseInt(e.key) - 1;
+            this.handleMove(this.cells[idx]);
+          }
+        });
+      }
+
+      // Genera un beep con frecuencia dada
+      playBeep(freq) {
+        const ctx = this.audioCtx;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.15);
+      }
+
+      start(aiVsAiMode) {
+        this.state.aiVsAiMode = aiVsAiMode;
+        this.state.board.fill('');
+        this.state.gameActive = true;
+        if (aiVsAiMode) {
+          this.state.aiVsAiScores = { joshua: 0, wopr: 0, draws: 0 };
+        } else {
+          this.state.scores = { player: 0, ai: 0, draws: 0 };
+        }
+        this.menuEl.style.display = 'none';
+        this.gameEl.style.display = 'block';
+
+        if (aiVsAiMode) {
+          this.state.playerSymbol = 'X';  // Joshua
+          this.state.aiSymbol = 'O';      // WOPR
+          this.state.currentPlayer = 'player';
+          this.updateScoreboard(true);
+          this.updateInfo('Simulación Joshua vs WOPR', true);
+          setTimeout(() => this.runAiVsAiTurn(), 500);
+        } else {
+          this.state.playerSymbol = document.querySelector('input[name="symbol"]:checked').value;
+          this.state.aiSymbol = this.state.playerSymbol === 'X' ? 'O' : 'X';
+          this.state.currentPlayer = document.querySelector('input[name="start"]:checked').value;
+          this.updateScoreboard(false);
+          this.updateInfo(
+            this.state.currentPlayer === 'player'
+              ? `Tu turno (${this.state.playerSymbol})`
+              : `Turno de la IA (${this.state.aiSymbol})`,
+            this.state.currentPlayer !== 'player'
+          );
+          if (this.state.currentPlayer === 'ai') setTimeout(() => this.aiMove(), 500);
+        }
+
+        this.cells.forEach(c => c.className = 'cell');
+        this.updateBoardUI();
+      }
+
+      reset(retainScores) {
+        this.state.board.fill('');
+        this.state.gameActive = true;
+        if (!retainScores) {
+          this.state.scores = { player: 0, ai: 0, draws: 0 };
+          this.state.aiVsAiScores = { joshua: 0, wopr: 0, draws: 0 };
+        }
+        this.start(this.state.aiVsAiMode);
+      }
+
+      showMenu() {
+        this.state.aiVsAiMode = false;
+        this.state.gameActive = false;
+        this.gameEl.style.display = 'none';
+        this.menuEl.style.display = 'block';
+      }
+
+      handleMove(cell) {
+        const idx = +cell.dataset.index;
+        if (this.state.board[idx] || !this.state.gameActive || this.state.aiVsAiMode) return;
+        this.play(idx, this.state.playerSymbol);
+        if (this.checkEnd(this.state.playerSymbol)) return;
+        this.state.currentPlayer = 'ai';
+        this.updateInfo('IA pensando...', true);
+        setTimeout(() => this.aiMove(), 500);
+      }
+
+      play(idx, symbol) {
+        // beep al hacer el movimiento
+        this.playBeep(symbol === 'X' ? 880 : 440);
+        this.state.board[idx] = symbol;
+        const cell = this.cells[idx];
+        cell.textContent = symbol;
+        cell.classList.add(symbol.toLowerCase());
+      }
+
+      aiMove() {
+        if (!this.state.gameActive) return;
+        this.clearThinking();
+        const move = this.getAiMove();
+        if (move == null) return;
+        this.play(move, this.state.aiSymbol);
+        if (this.checkEnd(this.state.aiSymbol)) return;
+        this.state.currentPlayer = 'player';
+        this.updateInfo(`Tu turno (${this.state.playerSymbol})`);
+      }
+
+      runAiVsAiTurn() {
+        if (!this.state.gameActive || !this.state.aiVsAiMode) return;
+        this.clearThinking();
+        const sym = this.state.currentPlayer === 'player'
+          ? this.state.playerSymbol
+          : this.state.aiSymbol;
+        const opp = sym === 'X'
+          ? 'O'
+          : 'X';
+        const move = this.getHeuristicMoveFor(sym, opp);
+        if (move != null) this.play(move, sym);
+        if (this.checkEnd(sym)) return;
+        this.state.currentPlayer = this.state.currentPlayer === 'player' ? 'ai' : 'player';
+        this.updateInfo('Simulación Joshua vs WOPR', true);
+        setTimeout(() => this.runAiVsAiTurn(), 500);
+      }
+
+      getAiMove() {
+        if (this.state.aiDifficulty === 'random') return this.getRandomMove();
+        if (this.state.aiDifficulty === 'heuristic') return this.getHeuristicMove();
+        return this.getMinimaxMove();
+      }
+
+      getRandomMove() {
+        const empties = this.state.board
+          .map((v,i) => v === '' ? i : null)
+          .filter(i => i != null);
+        return empties.length
+          ? empties[Math.floor(Math.random() * empties.length)]
+          : null;
+      }
+
+      getHeuristicMove() {
+        return this.getHeuristicMoveFor(
+          this.state.aiSymbol,
+          this.state.playerSymbol
+        );
+      }
+
+      getHeuristicMoveFor(sym, opp) {
+        const b = this.state.board;
+        for (let i = 0; i < 9; i++) {
+          if (!b[i]) {
+            b[i] = sym;
+            if (this.checkWin(sym)) { b[i] = ''; return i; }
+            b[i] = '';
+          }
+        }
+        for (let i = 0; i < 9; i++) {
+          if (!b[i]) {
+            b[i] = opp;
+            if (this.checkWin(opp)) { b[i] = ''; return i; }
+            b[i] = '';
+          }
+        }
+        if (!b[4]) return 4;
+        const corners = [0,2,6,8].filter(i => !b[i]);
+        return corners.length
+          ? corners[Math.floor(Math.random() * corners.length)]
+          : this.getRandomMove();
+      }
+
+      getMinimaxMove() {
+        let bestVal = -Infinity, bestMove = null;
+        for (let i = 0; i < 9; i++) {
+          if (!this.state.board[i]) {
+            this.state.board[i] = this.state.aiSymbol;
+            const val = this.minimax(0, false, -Infinity, Infinity);
+            this.state.board[i] = '';
+            if (val > bestVal) { bestVal = val; bestMove = i; }
+          }
+        }
+        return bestMove;
+      }
+
+      minimax(depth, isMax, alpha, beta) {
+        if (this.checkWin(this.state.aiSymbol)) return 10 - depth;
+        if (this.checkWin(this.state.playerSymbol)) return depth - 10;
+        if (this.state.board.every(c => c)) return 0;
+        let best = isMax ? -Infinity : Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (!this.state.board[i]) {
+            this.state.board[i] = isMax
+              ? this.state.aiSymbol
+              : this.state.playerSymbol;
+            const val = this.minimax(depth + 1, !isMax, alpha, beta);
+            this.state.board[i] = '';
+            best = isMax ? Math.max(best, val) : Math.min(best, val);
+            if (isMax) alpha = Math.max(alpha, best);
+            else beta = Math.min(beta, best);
+            if (beta <= alpha) break;
+          }
+        }
+        return best;
+      }
+
+      checkWin(symbol) {
+        return WIN_COMBOS.some(c => c.every(i => this.state.board[i] === symbol));
+      }
+
+      checkEnd(symbol) {
+        if (this.checkWin(symbol)) {
+          this.state.gameActive = false;
+          this.highlightWin(symbol);
+
+          if (this.state.aiVsAiMode) {
+            if (symbol === 'X') {
+              this.state.aiVsAiScores.joshua++;
+              this.updateInfo('Joshua gana', false);
+            } else {
+              this.state.aiVsAiScores.wopr++;
+              this.updateInfo('WOPR gana', false);
+            }
+            this.updateScoreboard(true);
+            setTimeout(() => this.start(true), 3000);
+          } else {
+            if (symbol === this.state.playerSymbol) {
+              this.state.scores.player++;
+              this.updateInfo(`¡Ganaste! (${symbol})`, false);
+            } else {
+              this.state.scores.ai++;
+              this.updateInfo(`La IA ganó (${symbol})`, false);
+            }
+            this.updateScoreboard(false);
+          }
+          return true;
+        }
+
+        if (this.state.board.every(c => c)) {
+          this.state.gameActive = false;
+          if (this.state.aiVsAiMode) {
+            this.state.aiVsAiScores.draws++;
+            this.updateInfo('¡Empate!', false);
+            this.updateScoreboard(true);
+            setTimeout(() => this.start(true), 3000);
+          } else {
+            this.state.scores.draws++;
+            this.updateInfo('¡Empate!', false);
+            this.updateScoreboard(false);
+          }
+          return true;
+        }
+
+        return false;
+      }
+
+      highlightWin(symbol) {
+        const combo = WIN_COMBOS.find(c => c.every(i => this.state.board[i] === symbol));
+        if (combo) combo.forEach(i => this.cells[i].classList.add('winner'));
+      }
+
+      updateBoardUI() {
+        this.cells.forEach((cell, i) => {
+          const sym = this.state.board[i];
+          cell.textContent = sym;
+          cell.className = sym ? `cell ${sym.toLowerCase()}` : 'cell';
+        });
+      }
+
+      updateInfo(text, thinking = false) {
+        this.infoEl.textContent = text;
+        this.infoEl.classList.toggle('thinking', thinking);
+      }
+
+      updateScoreboard(aiVsAiMode) {
+        if (aiVsAiMode) {
+          const s = this.state.aiVsAiScores;
+          this.scoreEl.textContent = `Joshua: ${s.joshua} | WOPR: ${s.wopr} | Empates: ${s.draws}`;
+        } else {
+          const s = this.state.scores;
+          this.scoreEl.textContent = `Jugador: ${s.player} | IA: ${s.ai} | Empates: ${s.draws}`;
+        }
+      }
+
+      clearThinking() {
+        this.infoEl.classList.remove('thinking');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => new TicTacToe());
+  </script>
+</body>
+</html>

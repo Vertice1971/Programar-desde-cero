@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Adivina el número</title>
+  <style>
+    :root {
+      --bg: #f0f0f0;
+      --card: #fff;
+      --primary: #4a90e2;
+      --text: #333;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1em;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 0.5rem;
+      padding: 2rem;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 {
+      margin-top: 0;
+      color: var(--primary);
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 0.75em;
+      margin: 0.5em 0;
+      border: 1px solid #ccc;
+      border-radius: 0.25rem;
+      font-size: 1rem;
+    }
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0.75em 1.5em;
+      font-size: 1rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 0.5em;
+    }
+    button:hover {
+      background: #357abd;
+    }
+    #resultado {
+      margin-top: 1em;
+      font-weight: bold;
+    }
+    #contador {
+      margin-top: 0.5em;
+      color: #666;
+    }
+    .hidden {
+      display: none;
+    }
+    footer {
+      margin-top: 2em;
+      font-size: 0.8em;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Autor: Tomás Cuesta | tomcue@iesjuandelacierva.com -->
+
+<div class="card">
+
+  <h1>Adivina el número</h1>
+
+  <div id="menuModo">
+    <p>Selecciona un modo de juego:</p>
+    <button onclick="seleccionarModo('facil')">Modo Fácil</button>
+    <button onclick="seleccionarModo('dificil')">Modo Difícil</button>
+  </div>
+
+  <div id="configuracion" class="hidden">
+    <p>Elige un número del 1 al 100 y cuántos intentos quieres:</p>
+    <label for="intentos">Intentos (1–10):</label>
+    <input type="number" id="intentos" min="1" max="10" value="5"/>
+    <button id="btnEmpezar">Empezar juego</button>
+  </div>
+
+  <div id="zonaJuego" class="hidden">
+    <p>Introduce tu número:</p>
+    <input type="number" id="entrada" min="1" max="100"/>
+    <button id="btnProbar">Probar</button>
+    <div id="resultado"></div>
+    <div id="contador"></div>
+    <button id="btnReiniciar" class="hidden">Volver al menú</button>
+  </div>
+
+  <footer>Tomás Cuesta</footer>
+</div>
+
+<audio id="sonidoAcierto" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="sonidoError" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+
+<script>
+(() => {
+  let secreto, maxIntentos, usados, prevDiff, terminado, modo;
+
+  const menuModo     = document.getElementById('menuModo');
+  const configuracion = document.getElementById('configuracion');
+  const zonaJuego    = document.getElementById('zonaJuego');
+  const btnEmpezar   = document.getElementById('btnEmpezar');
+  const btnProbar    = document.getElementById('btnProbar');
+  const btnReiniciar = document.getElementById('btnReiniciar');
+  const resultado    = document.getElementById('resultado');
+  const contador     = document.getElementById('contador');
+  const entrada      = document.getElementById('entrada');
+  const inputIntentos = document.getElementById('intentos');
+  const sonidoOk     = document.getElementById('sonidoAcierto');
+  const sonidoErr    = document.getElementById('sonidoError');
+
+  window.seleccionarModo = function(tipo) {
+    modo = tipo;
+    menuModo.classList.add('hidden');
+    configuracion.classList.remove('hidden');
+  }
+
+  btnEmpezar.addEventListener('click', () => {
+    secreto     = Math.floor(Math.random() * 100) + 1;
+    maxIntentos = +inputIntentos.value;
+    usados      = 0;
+    prevDiff    = null;
+    terminado   = false;
+
+    resultado.textContent = '';
+    contador.textContent  = `Intento 1 de ${maxIntentos}`;
+    entrada.value = '';
+    zonaJuego.classList.remove('hidden');
+    configuracion.classList.add('hidden');
+
+    inputIntentos.disabled = true;
+    btnEmpezar.disabled = true;
+    btnProbar.disabled = false;
+    btnReiniciar.classList.add('hidden');
+  });
+
+  btnProbar.addEventListener('click', () => {
+    if (terminado) return;
+
+    const val = parseInt(entrada.value, 10);
+    if (!val || val < 1 || val > 100) {
+      resultado.textContent = 'Introduce un número válido entre 1 y 100.';
+      return;
+    }
+
+    usados++;
+    let msg = '';
+
+    if (val === secreto) {
+      msg = `¡Correcto! Era ${secreto}. Adivinaste en ${usados} intento(s).`;
+      sonidoOk.play();
+      terminarJuego();
+    } else {
+      sonidoErr.play();
+
+      if (modo === 'facil') {
+        msg = val < secreto ? 'El número es más alto.' : 'El número es más bajo.';
+      } else if (modo === 'dificil') {
+        const diff = Math.abs(val - secreto);
+        if (usados === 1) {
+          msg = val < secreto ? 'Más alto.' : 'Más bajo.';
+        } else {
+          msg = diff < prevDiff ? '¡Te acercas más que la última vez!' :
+                diff > prevDiff ? 'Te alejas más que la última vez' :
+                'Misma distancia que antes.';
+        }
+        prevDiff = diff;
+      }
+    }
+
+    resultado.textContent = msg;
+
+    if (!terminado && usados >= maxIntentos) {
+      resultado.textContent += ` Has perdido. Era ${secreto}.`;
+      sonidoErr.play();
+      terminarJuego();
+    }
+
+    if (!terminado) {
+      contador.textContent = `Intento ${usados + 1} de ${maxIntentos}`;
+    }
+  });
+
+  btnReiniciar.addEventListener('click', () => {
+    zonaJuego.classList.add('hidden');
+    menuModo.classList.remove('hidden');
+    configuracion.classList.add('hidden');
+
+    inputIntentos.disabled = false;
+    btnEmpezar.disabled = false;
+    resultado.textContent = '';
+    contador.textContent = '';
+    entrada.value = '';
+  });
+
+  function terminarJuego() {
+    terminado = true;
+    btnProbar.disabled = true;
+    contador.textContent = 'Juego terminado.';
+    btnReiniciar.classList.remove('hidden');
+  }
+})();
+</script>
+
+</body>
+</html>

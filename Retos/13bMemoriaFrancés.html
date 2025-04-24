@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Memory: Verbos en Français (Passé Composé)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #004d40;
+      margin-bottom: 20px;
+    }
+    #config {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    label, select, input, button {
+      font-size: 16px;
+      margin: 5px;
+    }
+    input[type="text"] {
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 200px;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      background: #00796b;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover { background: #004d40; }
+    #game {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 20px;
+    }
+    .card {
+      position: relative;
+      width: 100%;
+      padding-top: 100%;
+      perspective: 600px;
+    }
+    .inner {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      transition: transform 0.4s;
+      transform-style: preserve-3d;
+      cursor: pointer;
+      border-radius: 10px;
+    }
+    .card.flipped .inner { transform: rotateY(180deg); }
+    .front, .back {
+      position: absolute;
+      width: 100%; height: 100%;
+      backface-visibility: hidden;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      padding: 5px;
+      text-align: center;
+    }
+    .back {
+      background: #00796b;
+      color: #fff;
+    }
+    .front {
+      background: #fff;
+      color: #000;
+      transform: rotateY(180deg);
+    }
+    .card.matched .front {
+      background: #388e3c;
+      color: #fff;
+    }
+    .card.matched { pointer-events: none; }
+    #status {
+      display: none;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    #final {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    #restart {
+      display: none;
+      background: #ff9800;
+    }
+  </style>
+</head>
+<body>
+  <h1>Memory: Verbos en Français (Passé Composé)</h1>
+
+  <div id="config">
+    <label for="players">Jugadores:</label>
+    <select id="players">
+      <option value="1">1</option>
+      <option value="2">2</option>
+    </select>
+    <br>
+    <div id="names-config">
+      <label for="name1">Nombre Jugador 1:</label>
+      <input type="text" id="name1" placeholder="Jugador 1">
+      <br>
+      <label for="name2" id="label2">Nombre Jugador 2:</label>
+      <input type="text" id="name2" placeholder="Jugador 2">
+    </div>
+    <br>
+    <label for="pairs">Número de parejas (hasta 15):</label>
+    <select id="pairs">
+      <!-- Opciones del 1 al 15 -->
+      <script>
+        for (let i = 1; i <= 15; i++) {
+          document.write(`<option value="${i}">${i}</option>`);
+        }
+      </script>
+    </select>
+    <br>
+    <button id="start-btn">Empezar juego</button>
+  </div>
+
+  <div id="status"></div>
+  <div id="game"></div>
+  <div id="final"></div>
+  <button id="restart">Volver al menú inicial</button>
+
+  <script>
+    // Lista de 30 verbos en francés con passé composé
+    const verbs = [
+      {infinitive: "aller",      translation: "ir",          participle: "je suis allé"},
+      {infinitive: "venir",      translation: "venir",       participle: "je suis venu"},
+      {infinitive: "arriver",    translation: "llegar",      participle: "je suis arrivé"},
+      {infinitive: "partir",     translation: "marchar",      participle: "je suis parti"},
+      {infinitive: "entrer",     translation: "entrar",      participle: "je suis entré"},
+      {infinitive: "sortir",     translation: "salir",       participle: "je suis sorti"},
+      {infinitive: "monter",     translation: "subir",       participle: "je suis monté"},
+      {infinitive: "descendre",  translation: "bajar",       participle: "je suis descendu"},
+      {infinitive: "retourner",  translation: "volver",      participle: "je suis retourné"},
+      {infinitive: "rester",     translation: "quedarse",    participle: "je suis resté"},
+      {infinitive: "tomber",     translation: "caer",        participle: "je suis tombé"},
+      {infinitive: "naître",     translation: "nacer",       participle: "je suis né"},
+      {infinitive: "mourir",     translation: "morir",       participle: "je suis mort"},
+      {infinitive: "se lever",   translation: "levantarse", participle: "je me suis levé"},
+      {infinitive: "se coucher", translation: "acostarse",   participle: "je me suis couché"},
+      {infinitive: "faire",      translation: "hacer",       participle: "j'ai fait"},
+      {infinitive: "avoir",      translation: "tener",       participle: "j'ai eu"},
+      {infinitive: "être",       translation: "ser/estar",   participle: "j'ai été"},
+      {infinitive: "dire",       translation: "decir",       participle: "j'ai dit"},
+      {infinitive: "voir",       translation: "ver",         participle: "j'ai vu"},
+      {infinitive: "pouvoir",    translation: "poder",       participle: "j'ai pu"},
+      {infinitive: "vouloir",    translation: "querer",      participle: "j'ai voulu"},
+      {infinitive: "devoir",     translation: "deber",       participle: "j'ai dû"},
+      {infinitive: "prendre",    translation: "tomar",       participle: "j'ai pris"},
+      {infinitive: "comprendre", translation: "entender",    participle: "j'ai compris"},
+      {infinitive: "mettre",     translation: "poner",       participle: "j'ai mis"},
+      {infinitive: "écrire",     translation: "escribir",    participle: "j'ai écrit"},
+      {infinitive: "lire",       translation: "leer",        participle: "j'ai lu"},
+      {infinitive: "savoir",     translation: "saber",       participle: "j'ai su"},
+      {infinitive: "connaître",  translation: "conocer",     participle: "j'ai connu"}
+    ];
+
+    let cards = [], flipped = [], lock = false;
+    let scores = [0, 0], currentPlayer = 0;
+    let numPlayers = 1, numPairs = 1;
+    let playerNames = ["Jugador 1", "Jugador 2"];
+    let gameActive = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const playersEl  = document.getElementById('players');
+      const name1El    = document.getElementById('name1');
+      const name2El    = document.getElementById('name2');
+      const label2El   = document.getElementById('label2');
+      const startBtn   = document.getElementById('start-btn');
+      const restartBtn = document.getElementById('restart');
+
+      function toggleNames() {
+        if (playersEl.value === '1') {
+          label2El.style.display = 'none';
+          name2El.style.display  = 'none';
+        } else {
+          label2El.style.display = 'inline-block';
+          name2El.style.display  = 'inline-block';
+        }
+      }
+      playersEl.addEventListener('change', toggleNames);
+      toggleNames();
+
+      startBtn.addEventListener('click', () => {
+        const n1 = name1El.value.trim();
+        const n2 = name2El.value.trim();
+        if (!n1) return alert('Introduce el nombre del Jugador 1');
+        if (playersEl.value === '2' && !n2) return alert('Introduce el nombre del Jugador 2');
+        playerNames[0] = n1;
+        playerNames[1] = n2 || 'Jugador 2';
+        startGame();
+      });
+
+      restartBtn.addEventListener('click', resetToMenu);
+    });
+
+    function startGame() {
+      numPlayers = +document.getElementById("players").value;
+      numPairs   = +document.getElementById("pairs").value;
+      gameActive = true;
+
+      document.getElementById("config").style.display  = "none";
+      document.getElementById("status").style.display  = "block";
+      document.getElementById("game").innerHTML        = "";
+      document.getElementById("final").textContent     = "";
+      document.getElementById("restart").style.display = "none";
+
+      cards = [];
+      flipped = [];
+      lock = false;
+      scores = [0, 0];
+      currentPlayer = 0;
+
+      // construir mazo
+      verbs.slice(0, numPairs).forEach(v => {
+        cards.push({ text: `${v.infinitive} - ${v.translation}`, id: v.infinitive });
+        cards.push({ text: v.participle, id: v.infinitive });
+      });
+      shuffle(cards);
+
+      const board = document.getElementById("game");
+      cards.forEach(card => {
+        const el = document.createElement("div");
+        el.className = "card";
+        el.dataset.id = card.id;
+        el.innerHTML = `
+          <div class="inner">
+            <div class="front">${card.text}</div>
+            <div class="back"></div>
+          </div>`;
+        el.addEventListener("click", onCardClick);
+        board.appendChild(el);
+      });
+
+      updateStatus();
+    }
+
+    function updateStatus() {
+      const s = document.getElementById("status");
+      if (numPlayers === 1) {
+        s.textContent = `${playerNames[0]}: ${scores[0]} parejas`;
+      } else {
+        s.textContent = `${playerNames[0]}: ${scores[0]} pts | ${playerNames[1]}: ${scores[1]} pts | Turno: ${playerNames[currentPlayer]}`;
+      }
+    }
+
+    function beep(freq) {
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = freq; osc.type = "sine";
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.2);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime+0.2);
+    }
+
+    function onCardClick(e) {
+      if (!gameActive || lock) return;
+      const card = e.currentTarget;
+      if (card.classList.contains("flipped") || card.classList.contains("matched")) return;
+
+      card.classList.add("flipped");
+      flipped.push(card);
+
+      if (flipped.length === 2) {
+        lock = true;
+        const [a, b] = flipped;
+        if (a.dataset.id === b.dataset.id) {
+          a.classList.add("matched");
+          b.classList.add("matched");
+          beep(800);
+          scores[currentPlayer]++;
+        } else {
+          beep(200);
+          setTimeout(() => {
+            a.classList.remove("flipped");
+            b.classList.remove("flipped");
+          }, 1000);
+          if (numPlayers === 2) currentPlayer = 1 - currentPlayer;
+        }
+        setTimeout(() => {
+          flipped = [];
+          lock = false;
+          updateStatus();
+          if (document.querySelectorAll(".matched").length === cards.length) {
+            endGame();
+          }
+        }, 1100);
+      }
+    }
+
+    function endGame() {
+      gameActive = false;
+      const f = document.getElementById("final");
+      if (numPlayers === 1) {
+        f.textContent = `¡Juego terminado! Has encontrado ${scores[0]} parejas.`;
+      } else {
+        f.textContent = scores[0] > scores[1]
+          ? `¡${playerNames[0]} gana!`
+          : scores[1] > scores[0]
+            ? `¡${playerNames[1]} gana!`
+            : "¡Empate!";
+      }
+      document.getElementById("restart").style.display = "inline-block";
+    }
+
+    function resetToMenu() {
+      document.getElementById("game").innerHTML        = "";
+      document.getElementById("status").style.display  = "none";
+      document.getElementById("final").textContent     = "";
+      document.getElementById("restart").style.display = "none";
+      document.getElementById("config").style.display  = "block";
+      gameActive = false;
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+  </script>
+</body>
+</html>

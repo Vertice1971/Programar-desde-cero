@@ -1,0 +1,344 @@
+<!--
+Tomás Cuesta
+tomcue@iesjuandelacierva.com
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simón Dice - Versión Definitiva</title>
+  <style>
+    :root {
+      --fs-title: clamp(2rem, 6vw, 3rem);
+      --fs-text: clamp(1rem, 2.5vw, 1.25rem);
+      --pad-size: min(90vw, 320px);
+      --center-size: clamp(90px, 15vw, 120px);
+      --btn-pad: clamp(0.5rem, 1.5vw, 1rem);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      font-family: Arial, sans-serif;
+      color: #fff;
+      padding: 1rem;
+    }
+
+    .container {
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    h1 {
+      font-size: var(--fs-title);
+      margin-bottom: 0.25rem;
+      color: #ffd700;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    }
+
+    .author {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 1rem;
+    }
+
+    .game-board {
+      position: relative;
+      width: var(--pad-size);
+      height: var(--pad-size);
+      margin: 1rem auto;
+      border-radius: 50%;
+      background: #333;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    .color {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+    }
+    .color.active {
+      opacity: 0.9;
+      transform: scale(0.95);
+    }
+    .color.green  { top:0; left:0; background: #2ecc71; border-top-left-radius:100%; }
+    .color.red    { top:0; right:0; background: #e74c3c; border-top-right-radius:100%; }
+    .color.yellow { bottom:0; left:0; background:#f1c40f; border-bottom-left-radius:100%; }
+    .color.blue   { bottom:0; right:0; background:#3498db; border-bottom-right-radius:100%; }
+
+    .center-circle {
+      position: absolute;
+      top:50%; left:50%;
+      transform: translate(-50%,-50%);
+      width: var(--center-size);
+      height: var(--center-size);
+      background:#2c3e50;
+      border-radius:50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+      z-index:10;
+    }
+
+    .score {
+      font-size: var(--fs-title);
+      font-weight: bold;
+    }
+
+    .message {
+      margin:1rem 0;
+      min-height:1.5em;
+      font-size: var(--fs-text);
+      color:#ffd700;
+    }
+
+    .controls {
+      display:flex;
+      justify-content:center;
+      gap:1rem;
+      flex-wrap:wrap;
+    }
+
+    button {
+      padding: var(--btn-pad) 1.5rem;
+      border:none;
+      border-radius:5px;
+      background:#3498db;
+      color:#fff;
+      font-size: var(--fs-text);
+      cursor:pointer;
+      transition: all 0.2s;
+      box-shadow:0 3px 6px rgba(0,0,0,0.2);
+    }
+    button:disabled {
+      opacity:0.5;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background:#2980b9;
+      transform: translateY(-2px);
+    }
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .strict-mode {
+      margin-top:1rem;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:0.5rem;
+    }
+
+    input[type="checkbox"] {
+      width:18px;
+      height:18px;
+      cursor:pointer;
+    }
+
+    .strict-indicator {
+      font-size: 0.9rem;
+      color: #ff6f61;
+      display: none;
+    }
+    .strict-indicator.active {
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main">
+    <h1>SIMÓN DICE</h1>
+    <div class="author">Tomás Cuesta</div>
+    <div class="game-board" aria-label="Tablero Simón Dice">
+      <div class="color green"  id="green"  aria-label="Color verde"></div>
+      <div class="color red"    id="red"    aria-label="Color rojo"></div>
+      <div class="color yellow" id="yellow" aria-label="Color amarillo"></div>
+      <div class="color blue"   id="blue"   aria-label="Color azul"></div>
+      <div class="center-circle" aria-hidden="true">
+        <div class="score" id="score" aria-live="polite">0</div>
+      </div>
+    </div>
+    <div class="message" id="message" aria-live="assertive">Presiona Iniciar para jugar</div>
+    <div class="controls">
+      <button id="start-btn">Iniciar</button>
+      <button id="reset-btn" disabled>Reiniciar</button>
+    </div>
+    <div class="strict-mode">
+      <input type="checkbox" id="strict" aria-label="Modo estricto">
+      <label for="strict">Modo estricto</label>
+      <span class="strict-indicator" id="strict-ind">¡Modo Estricto ON!</span>
+    </div>
+  </div>
+
+  <script>
+    const COLORS = { green:{freq:440,key:'a'}, red:{freq:330,key:'s'},
+                     yellow:{freq:262,key:'k'}, blue:{freq:196,key:'l'} };
+    const MAX_LEVEL = 20;
+
+    const elems = {
+      startBtn:     document.getElementById('start-btn'),
+      resetBtn:     document.getElementById('reset-btn'),
+      strictCheck:  document.getElementById('strict'),
+      strictInd:    document.getElementById('strict-ind'),
+      scoreDisplay: document.getElementById('score'),
+      msgDisplay:   document.getElementById('message')
+    };
+
+    let state = {
+      sequence:[], playerSeq:[], level:0,
+      isPlaying:false, isStrict:false,
+      audioCtx:new (window.AudioContext||window.webkitAudioContext)(),
+      currentMsgId:0
+    };
+
+    async function initGame(){
+      elems.startBtn.addEventListener('click', startGame);
+      elems.resetBtn.addEventListener('click', resetGame);
+      elems.strictCheck.addEventListener('change', ()=> {
+        if(!state.isPlaying) state.isStrict = elems.strictCheck.checked;
+        elems.strictInd.classList.toggle('active', elems.strictCheck.checked);
+      });
+      Object.keys(COLORS).forEach(c=>{
+        document.getElementById(c).addEventListener('click', ()=>handleMove(c));
+      });
+      document.addEventListener('keydown', e=>{
+        const k=e.key.toLowerCase();
+        for(let [c,d] of Object.entries(COLORS))
+          if(k===d.key) handleMove(c);
+      });
+      resetGame();
+    }
+
+    async function ensureAudio(){
+      if(state.audioCtx.state==='suspended'){
+        try{ await state.audioCtx.resume(); return true; }
+        catch{ return false; }
+      }
+      return true;
+    }
+
+    async function startGame(){
+      if(state.isPlaying) return;
+      if(!await ensureAudio()){ showMessage("Activa el audio para jugar",3000); return; }
+      state.isPlaying=true;
+      elems.startBtn.disabled=true;
+      elems.strictCheck.disabled=true;
+      elems.resetBtn.disabled=false;
+      state.level=1; state.playerSeq=[];
+      state.sequence = Array.from({length:MAX_LEVEL},_=>{
+        const keys=Object.keys(COLORS);
+        return keys[Math.floor(Math.random()*keys.length)];
+      });
+      updateScore(0);
+      showMessage("Observa la secuencia...",0);
+      playSeq();
+    }
+
+    function resetGame(){
+      state.isPlaying=false;
+      elems.startBtn.disabled=false;
+      elems.resetBtn.disabled=true;
+      elems.strictCheck.disabled=false;
+      state.level=0; state.sequence=[]; state.playerSeq=[];
+      updateScore(0);
+      showMessage("Presiona Iniciar para jugar",0);
+    }
+
+    function playSeq(){
+      let i=0;
+      const next=()=>{
+        if(i>=state.level||!state.isPlaying) return showMessage("¡Tu turno!",0);
+        activate(state.sequence[i++]);
+        setTimeout(next,600);
+      };
+      setTimeout(next,500);
+      state.playerSeq=[];
+    }
+
+    function handleMove(color){
+      if(!state.isPlaying) return;
+      activate(color);
+      state.playerSeq.push(color);
+      const idx=state.playerSeq.length-1;
+      if(state.playerSeq[idx]!==state.sequence[idx]){ wrongMove(); return; }
+      if(state.playerSeq.length===state.level) correctMove();
+    }
+
+    function wrongMove(){
+      showMessage("¡Error!",1500);
+      playTone(150,'square',0.5);
+      if(state.isStrict){
+        setTimeout(()=>{ resetGame(); showMessage("Perdiste en modo estricto",2000); },1000);
+      } else {
+        setTimeout(()=>{ showMessage("Inténtalo de nuevo",1000); playSeq(); },1000);
+      }
+    }
+
+    function correctMove(){
+      playTone(880,'sine',0.3);
+      state.level++;
+      updateScore(state.level-1);
+      if(state.level>MAX_LEVEL){
+        showMessage("¡Ganaste! 🎉",0);
+        state.isPlaying=false;
+        return;
+      }
+      showMessage("¡Correcto!",1000);
+      setTimeout(playSeq,1000);
+    }
+
+    function activate(color){
+      const el=document.getElementById(color);
+      el.classList.add('active');
+      playTone(COLORS[color].freq);
+      el.style.boxShadow=`inset 0 0 30px white,0 0 20px ${getComputedStyle(el).backgroundColor}`;
+      setTimeout(()=>{
+        el.classList.remove('active');
+        el.style.boxShadow='inset 0 0 20px rgba(0,0,0,0.3)';
+      },300);
+    }
+
+    function playTone(freq,type='sine',dur=0.3){
+      const ctx=state.audioCtx;
+      if(ctx.state==='suspended') ctx.resume();
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.type=type; osc.frequency.value=freq;
+      osc.connect(gain); gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.2,ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+dur);
+      osc.start(); osc.stop(ctx.currentTime+dur);
+    }
+
+    function updateScore(val){ elems.scoreDisplay.textContent=val; }
+
+    function showMessage(txt,time=1000){
+      const id=++state.currentMsgId;
+      elems.msgDisplay.textContent=txt;
+      if(time>0){
+        setTimeout(()=>{ if(id===state.currentMsgId) elems.msgDisplay.textContent=''; },time);
+      }
+    }
+
+    window.addEventListener('load',initGame);
+  </script>
+</body>
+</html>
