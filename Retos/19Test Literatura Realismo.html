@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Realismo en Literatura 4ºESO</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; text-align: center; background-color: #f5f8ff; }
+        .header-info { font-size: 0.9em; color: #555; margin-bottom: 5px; line-height: 1.2; }
+        .question-container { display: none; padding: 20px; border: 1px solid #ccc; border-radius: 10px; max-width: 600px; margin: 20px auto; background: #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .option { display: block; padding: 10px; margin: 10px 0; border: 2px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s, transform 0.2s; }
+        .option:hover { background: #e0ebff; transform: scale(1.05); }
+        .correct { background: #c8e6c9; border-color: green; }
+        .incorrect { background: #ffcdd2; border-color: red; }
+        #start-btn, #restart-btn, #next-btn { margin-top: 20px; padding: 10px 15px; background: #007BFF; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        #restart-btn { background: #28a745; }
+        #next-btn { position: fixed; right: 20px; top: 30%; display: none; }
+        #info-container { margin-top: 20px; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <div class="header-info">
+        <div>Tomás Cuesta</div>
+        <div>IES Juan de la Cierva</div>
+             <a href="https://www.amazon.es/dp/B0F61P4TXK/ref=sr_1_1?__mk_es_ES=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=1UYGTMHGP65IT&dib=eyJ2IjoiMSJ9.4EA8FozSRdrsUxxWzZ_6Jw.Sbsuqvp7gi48kUXBn0x_Uvdk33wfCxmgJBS_xWR9biE&dib_tag=se&keywords=aprender+programar+usando+la+ia&qid=1745418665&sprefix=aprender+programar+usando+la+ia%2Caps%2C232&sr=8-1" target="_blank" style="text-decoration: underline;">
+            Programar desde cero
+             </a>
+    </div>
+    <h1>Test de Realismo en Literatura 4ºESO</h1>
+    <div id="info-container"></div>
+    <button id="start-btn">Comenzar Quiz</button>
+    <div id="quiz-container" class="question-container"></div>
+    <button id="next-btn">Siguiente</button>
+    <button id="restart-btn" style="display:none;">Reiniciar</button>
+
+    <script>
+        const data = {
+            "preguntas": [
+                {
+                    "texto": "¿Qué movimiento literario surgió en el siglo XIX como respuesta a los cambios derivados de la Revolución Industrial y el avance científico?",
+                    "opciones": { "a": "El Realismo literario", "b": "El Romanticismo", "c": "El Modernismo" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué método aplicaron los autores realistas para observar y describir la sociedad?",
+                    "opciones": { "a": "El método científico", "b": "La intuición artística", "c": "El análisis filosófico" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cuál es la característica principal de la narrativa en el Realismo literario?",
+                    "opciones": { "a": "Una descripción minuciosa y objetiva de la realidad", "b": "Una estructura fragmentada y caótica", "c": "El uso excesivo de recursos fantásticos" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cómo se representan generalmente los personajes en la novela realista?",
+                    "opciones": { "a": "Como gente común", "b": "Como héroes míticos", "c": "Como figuras históricas legendarias" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué función tienen a menudo los personajes secundarios en la narrativa realista?",
+                    "opciones": { "a": "Servir para la sátira o la crítica social", "b": "Ser meros adornos sin relevancia", "c": "Representar ideales románticos" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cuál es la técnica narrativa predominante en la novela realista?",
+                    "opciones": { "a": "El narrador omnisciente en tercera persona", "b": "El narrador en primera persona", "c": "El monólogo interior" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué importancia tiene la descripción detallada en el Realismo literario?",
+                    "opciones": { "a": "Conseguir una verosimilitud absoluta de la realidad", "b": "Crear un ambiente onírico y fantástico", "c": "Romper la linealidad temporal de la historia" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cuál de los siguientes temas es recurrente en la novela realista?",
+                    "opciones": { "a": "El anticlericalismo", "b": "La exaltación de la naturaleza", "c": "La búsqueda de lo sobrenatural" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué conflicto social se aborda con frecuencia en las novelas realistas?",
+                    "opciones": { "a": "El choque entre tradición y progreso", "b": "La lucha entre el bien y el mal", "c": "El enfrentamiento entre reinos" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué es una novela de tesis dentro del Realismo literario?",
+                    "opciones": { "a": "Una obra que expone una postura ideológica o social", "b": "Una novela enfocada en el entretenimiento sin mensaje social", "c": "Un relato sin estructura definida" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué autor español es uno de los principales exponentes del Realismo literario?",
+                    "opciones": { "a": "Benito Pérez Galdós", "b": "Federico García Lorca", "c": "Miguel de Cervantes" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué obra de Benito Pérez Galdós se considera una novela de tesis que debate sobre los conflictos políticos del siglo XIX?",
+                    "opciones": { "a": "La Fontana de Oro", "b": "La desheredada", "c": "Fortunata y Jacinta" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué otro autor español, junto a Galdós, es destacado en el Realismo literario?",
+                    "opciones": { "a": "Juan Valera", "b": "Leopoldo Alas", "c": "Gonzalo Torrente Ballester" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cuál es la obra de Juan Valera que se centra en un relato más psicológico y sentimental?",
+                    "opciones": { "a": "Pepita Jiménez", "b": "La Fontana de Oro", "c": "Fortunata y Jacinta" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué conflicto interno se explora en la obra 'Pepita Jiménez'?",
+                    "opciones": { "a": "El debate entre vocación religiosa y sentimientos amorosos", "b": "El enfrentamiento entre familias enemistadas", "c": "La lucha entre el bien y el mal" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué autor francés influyó en la visión de la condición humana de los realistas a través de su obra 'La Comedia Humana'?",
+                    "opciones": { "a": "Honoré de Balzac", "b": "Gustave Flaubert", "c": "Victor Hugo" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué novela de Gustave Flaubert sirvió de modelo para 'La Regenta' de Leopoldo Alas 'Clarín'?",
+                    "opciones": { "a": "Madame Bovary", "b": "Nana", "c": "Salammbô" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué obra de Charles Dickens se menciona como representante del Realismo en Inglaterra?",
+                    "opciones": { "a": "David Copperfield", "b": "Oliver Twist", "c": "Grandes Esperanzas" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué novela de Fiódor Dostoyevski se asocia con el Realismo literario en Rusia?",
+                    "opciones": { "a": "Crimen y castigo", "b": "Los hermanos Karamázov", "c": "El idiota" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cuál es la principal diferencia entre el Realismo y el Naturalismo en la literatura?",
+                    "opciones": { "a": "El grado de aplicación del método científico", "b": "La presencia de personajes secundarios", "c": "El uso de diálogos" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué corriente literaria deriva del Realismo y lleva al extremo la aplicación del método científico?",
+                    "opciones": { "a": "El Naturalismo", "b": "El Modernismo", "c": "El Simbolismo" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "Según el Naturalismo, ¿de qué factores depende fundamentalmente el comportamiento humano?",
+                    "opciones": { "a": "Del entorno social y las características biológicas", "b": "De la voluntad individual", "c": "De la intervención divina" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cómo se caracterizan los personajes en las obras naturalistas?",
+                    "opciones": { "a": "Están determinados por su entorno y biología", "b": "Son idealizados y perfectos", "c": "Se destacan por su heroicidad" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué intención tienen las novelas naturalistas en relación con la sociedad burguesa?",
+                    "opciones": { "a": "Denunciar las injusticias y provocar reformas", "b": "Enaltecer sus virtudes", "c": "Romantizar su estilo de vida" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cuál es una de las características formales de las novelas naturalistas?",
+                    "opciones": { "a": "Una descripción objetiva y detallada de la realidad", "b": "Una estructura narrativa fragmentada", "c": "Un lenguaje excesivamente poético" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cuál de las siguientes características NO es propia del Naturalismo?",
+                    "opciones": { "a": "Enfatizar lo negativo de la sociedad", "b": "Idealizar a sus personajes", "c": "Uso de un léxico científico" },
+                    "respuesta": "b"
+                },
+                {
+                    "texto": "¿Qué obra de Benito Pérez Galdós incorpora elementos naturalistas en su narrativa?",
+                    "opciones": { "a": "La desheredada", "b": "La Fontana de Oro", "c": "Pepita Jiménez" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué otra obra de Galdós se asocia con la influencia del Naturalismo?",
+                    "opciones": { "a": "Fortunata y Jacinta", "b": "David Copperfield", "c": "Madame Bovary" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué elemento refuerza la objetividad en la narrativa realista?",
+                    "opciones": { "a": "La observación minuciosa de la vida cotidiana", "b": "El uso de metáforas exageradas", "c": "La narrativa en primera persona" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué recurso estilístico se utiliza en el Realismo para aportar expresividad al lenguaje?",
+                    "opciones": { "a": "El hipérbaton", "b": "La aliteración", "c": "La onomatopeya" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué importancia tiene el método científico en la narrativa realista?",
+                    "opciones": { "a": "Aporta objetividad y verosimilitud", "b": "Introduce elementos fantásticos", "c": "Rompe la coherencia narrativa" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿En qué periodo se desarrolló principalmente la novela realista?",
+                    "opciones": { "a": "Entre 1868 y 1880", "b": "Durante el siglo XVII", "c": "En el siglo XX" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué perspectiva social representa generalmente la novela realista?",
+                    "opciones": { "a": "Una visión liberal burguesa con crítica interna", "b": "Un idealismo revolucionario", "c": "Una exaltación de la vida campesina" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué papel cumple el narrador omnisciente en la novela realista?",
+                    "opciones": { "a": "Conocer y revelar los pensamientos y emociones de los personajes", "b": "Ser el protagonista principal", "c": "Limitar la visión del lector a un solo personaje" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cómo se logra la crítica social en las novelas realistas?",
+                    "opciones": { "a": "A través de la descripción detallada de la vida cotidiana y sus contradicciones", "b": "Mediante episodios fantásticos y sobrenaturales", "c": "Con el uso de narradores múltiples en conflicto" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué técnica narrativa permite al autor introducir valoraciones personales en la novela realista?",
+                    "opciones": { "a": "El narrador omnisciente", "b": "El narrador en primera persona", "c": "El monólogo interior" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cuál de los siguientes autores no se asocia tradicionalmente con el Realismo literario?",
+                    "opciones": { "a": "Miguel de Unamuno", "b": "Benito Pérez Galdós", "c": "Gustave Flaubert" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué característica comparten tanto el Realismo como el Naturalismo para lograr una 'verosimilitud absoluta' en la narrativa?",
+                    "opciones": { "a": "La observación objetiva y detallada de la realidad", "b": "El uso de elementos fantásticos y simbólicos", "c": "La exageración de los rasgos heroicos" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué aspecto social es frecuentemente objeto de crítica en las novelas realistas?",
+                    "opciones": { "a": "Las contradicciones y defectos de la burguesía", "b": "La exaltación de la monarquía", "c": "La idealización del campo" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué elemento distintivo del Naturalismo refuerza la idea de que el ser humano está determinado por su entorno?",
+                    "opciones": { "a": "La influencia del entorno social y las características biológicas", "b": "El libre albedrío del individuo", "c": "La intervención divina en el destino" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué importancia tienen las descripciones detalladas en la obra realista y naturalista?",
+                    "opciones": { "a": "Permiten una representación casi fotográfica de la realidad", "b": "Crean un ambiente de misterio y ambigüedad", "c": "Enfatizan la subjetividad del narrador" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué recurso del lenguaje, utilizado en el Realismo, contribuye a la expresividad del texto a pesar de mantener una estructura clara?",
+                    "opciones": { "a": "La metáfora", "b": "El símil", "c": "La alusión" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cómo se diferencia la visión narrativa de Juan Valera en 'Pepita Jiménez' de la de las novelas de tesis realistas?",
+                    "opciones": { "a": "Se centra más en el conflicto psicológico y sentimental", "b": "Recurre a descripciones exageradas de la sociedad", "c": "Utiliza un narrador omnisciente sin matices personales" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué influencia tuvo Honoré de Balzac en el movimiento realista?",
+                    "opciones": { "a": "Su obra 'La Comedia Humana' inspiró la visión de la condición humana", "b": "Introdujo elementos fantásticos en la narrativa", "c": "Defendió el idealismo romántico" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué rol juega el avance científico en el desarrollo del Realismo literario?",
+                    "opciones": { "a": "Inspira la aplicación del método científico en la observación de la sociedad", "b": "Fomenta la creación de mundos imaginarios", "c": "Relega la descripción detallada a un segundo plano" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué característica narrativa distingue al Naturalismo en la literatura?",
+                    "opciones": { "a": "Una visión determinista del ser humano", "b": "La exaltación del héroe romántico", "c": "El uso predominante del monólogo interior" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Cuál es el propósito de denunciar las injusticias en la narrativa naturalista?",
+                    "opciones": { "a": "Provocar cambios y reformas en la sociedad", "b": "Entretenir al lector con aventuras", "c": "Rescatar la tradición cultural" },
+                    "respuesta": "a"
+                },
+                {
+                    "texto": "¿Qué papel juega el léxico científico en las obras naturalistas?",
+                    "opciones": { "a": "Reforzar la idea de un análisis riguroso de la realidad", "b": "Ocultar el trasfondo social de la historia", "c": "Crear ambigüedad en la interpretación de los hechos" },
+                    "respuesta": "a"
+                }
+            ]
+        };
+
+        let preguntas = data.preguntas;
+        let preguntasElegidas = [];
+        let preguntaActual = 0;
+        let correctas = 0;
+
+        const infoContainer = document.getElementById('info-container');
+        const startBtn = document.getElementById('start-btn');
+        const quizContainer = document.getElementById('quiz-container');
+        const nextBtn = document.getElementById('next-btn');
+        const restartBtn = document.getElementById('restart-btn');
+
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            infoContainer.innerHTML = `<p>El test contiene <strong>${preguntas.length}</strong> preguntas.</p>`;
+            startBtn.style.display = 'inline-block';
+        });
+
+        startBtn.addEventListener('click', () => {
+            let num = prompt(`¿Cuántas preguntas deseas jugar? (1-${preguntas.length})`, preguntas.length);
+            num = parseInt(num);
+            if (isNaN(num) || num < 1 || num > preguntas.length) {
+                alert('Número no válido. Se jugarán todas las preguntas.');
+                num = preguntas.length;
+            }
+            preguntasElegidas = shuffle([...preguntas]).slice(0, num);
+            startBtn.style.display = 'none';
+            infoContainer.innerHTML = '';
+            mostrarPregunta();
+        });
+
+        function mostrarPregunta() {
+            if (preguntaActual < preguntasElegidas.length) {
+                quizContainer.innerHTML = '';
+                quizContainer.style.display = 'block';
+                nextBtn.style.display = 'none';
+
+                const p = preguntasElegidas[preguntaActual];
+                const h2 = document.createElement('h2');
+                h2.textContent = p.texto;
+                quizContainer.appendChild(h2);
+
+                shuffle(Object.entries(p.opciones).map(([k,v]) => ({ key:k, texto:v })))
+                    .forEach(op => {
+                        const div = document.createElement('div');
+                        div.className = 'option';
+                        div.textContent = op.texto;
+                        div.dataset.val = op.key;
+                        div.addEventListener('click', () => validar(div, p.respuesta));
+                        quizContainer.appendChild(div);
+                    });
+            } else {
+                quizContainer.innerHTML = `<h2>¡Test finalizado!</h2><p>Has acertado ${correctas} de ${preguntasElegidas.length} preguntas.</p>`;
+                nextBtn.style.display = 'none';
+                restartBtn.style.display = 'inline-block';
+            }
+        }
+
+        function validar(elem, resp) {
+            document.querySelectorAll('.option').forEach(o => o.style.pointerEvents = 'none');
+            if (elem.dataset.val === resp) {
+                elem.classList.add('correct');
+                correctas++;
+            } else {
+                elem.classList.add('incorrect');
+                const correcto = document.querySelector(`.option[data-val='${resp}']`);
+                if (correcto) correcto.classList.add('correct');
+            }
+            nextBtn.style.display = 'inline-block';
+        }
+
+        nextBtn.addEventListener('click', () => {
+            preguntaActual++;
+            mostrarPregunta();
+        });
+        restartBtn.addEventListener('click', () => {
+            location.reload();
+        });
+    </script>
+</body>
+</html>
