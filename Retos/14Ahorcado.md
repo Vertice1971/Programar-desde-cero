@@ -11,5 +11,5 @@ Versión web del clásico juego del Ahorcado, desarrollada en HTML, CSS y JavaSc
 - Compatible con teclado físico.
 
 ## Uso
-
-Abre el archivo `index.html` en tu navegador.
+Libre dominio licencia MIT
+tomcue@iesjuandelacierva.com
