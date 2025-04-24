@@ -1,7 +1,3 @@
-Aquí tienes un README sencillo en español para tu juego:
-
----
-
 # Tres en Raya con IA
 
 **Autor:** Tomás Cuesta  
