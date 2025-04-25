@@ -1,4 +1,4 @@
-lac# Aprende a programar desde cero (realmente) usando la Inteligencia Artificial
+# Aprende a programar desde cero (realmente) usando la Inteligencia Artificial
 
 **Autor:** Tomás Cuesta  
 **Centro:** IES Juan de la Cierva – Vélez-Málaga  
