@@ -3,6 +3,7 @@
 **Autor:** Tomás Cuesta  
 **Centro:** IES Juan de la Cierva – Vélez-Málaga  
 **Contacto:** tomcue@iesjuandelacierva.com  
+📖 **Disponible en Amazon:** [https://www.amazon.es/dp/B0F61P4TXK](https://www.amazon.es/dp/B0F61P4TXK)
 
 ---
 
