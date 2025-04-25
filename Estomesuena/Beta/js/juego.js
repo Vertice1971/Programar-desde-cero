@@ -31,6 +31,28 @@ function aleatorio(max) {
   return Math.floor(Math.random() * max);
 }
 
+function reproducirBeep(tipo = 'acierto') {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sine';
+
+  if (tipo === 'acierto') {
+    osc.frequency.value = 880; // Beep agudo
+    gain.gain.value = 0.2;
+  } else {
+    osc.frequency.value = 220; // Beep grave
+    gain.gain.value = 0.3;
+  }
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start();
+  osc.stop(ctx.currentTime + 0.25); // 0.25 segundos
+}
+
 function elegirImagenFondo(lista) {
   const url = lista[aleatorio(lista.length)];
   document.body.style.backgroundImage = `url('${url}')`;
@@ -154,9 +176,19 @@ async function reproducirFragmento(cancion) {
         }
         audioElement.currentTime = inicio;
         audioElement.play();
+
+        const barra = $('#barraTiempo');
+        barra.style.transition = 'none';
+        barra.style.width = '100%';
+        void barra.offsetWidth;
+        barra.style.transition = `width ${fragmento}s linear`;
+        barra.style.width = '0%';
+
         setTimeout(() => {
           audioElement.pause();
           URL.revokeObjectURL(url);
+          barra.style.transition = 'none';
+          barra.style.width = '0%';
           resolve();
         }, fragmento * 1000);
       };
@@ -209,6 +241,7 @@ function pararTemporizador() {
 }
 
 function manejarRespuestaTiempoAgotado(cancion) {
+  reproducirBeep('fallo');
   mostrarResultado(false, cancion.titulo, '¡Tiempo agotado!');
   continuarFlujoDespuesDeResultado();
 }
@@ -216,7 +249,6 @@ function manejarRespuestaTiempoAgotado(cancion) {
 function manejarRespuesta(tituloSeleccionado, cancionCorrecta) {
   pararTemporizador();
 
-  // Desactiva todas las opciones una vez se ha hecho clic
   $$('#opciones .opcion-boton').forEach(btn => {
     btn.disabled = true;
   });
@@ -224,10 +256,12 @@ function manejarRespuesta(tituloSeleccionado, cancionCorrecta) {
   const acierto = tituloSeleccionado === cancionCorrecta.titulo;
 
   if (acierto) {
+    reproducirBeep('acierto');
     jugadores[jugadorActualIndice].puntos += 1;
     cancionesDisponibles = cancionesDisponibles.filter(c => c.titulo !== cancionCorrecta.titulo);
     cancionesUsadas.add(cancionCorrecta.titulo);
   } else {
+    reproducirBeep('fallo');
     cancionesFalladas.push(cancionCorrecta);
   }
 
@@ -258,7 +292,7 @@ function continuarFlujoDespuesDeResultado() {
       avanzarTurno();
       siguienteRonda();
     }, 3000);
-  }, 7000);
+  }, 5000);
 }
 
 function avanzarTurno() {
@@ -268,21 +302,31 @@ function avanzarTurno() {
   }
 }
 
-function renderPuntuaciones() {
+function renderPuntuaciones(final = false) {
   const cont = $('#puntuaciones');
   cont.innerHTML = '';
   jugadores.forEach((j) => {
     const p = document.createElement('p');
     p.textContent = `${j.nombre}: ${j.puntos} punto(s)`;
+    if (final) p.classList.add('final-puntuacion');
     cont.appendChild(p);
   });
 }
 
 function finalizarJuego() {
   elegirImagenFondo([imagenFinal]);
+
   $('#infoTurno').textContent = 'Fin de la partida';
+  $('#infoTurno').classList.add('final-texto');
+
   $('#resultado').textContent = 'Marcador final:';
-  renderPuntuaciones();
+  $('#resultado').classList.add('final-texto');
+
+  $('#ronda').parentElement.classList.add('final-puntuacion');
+
+
+  renderPuntuaciones(true);
+
   $('#opciones').innerHTML = '';
   $('#temporizador').textContent = '';
 }

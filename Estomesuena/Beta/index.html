@@ -35,6 +35,10 @@
       </div>
 
       <div id="temporizador" style="text-align:center; font-size: 1.2rem; font-weight: bold;"></div>
+      <div id="barraTiempoContenedor">
+        <div id="barraTiempo"></div>
+      </div>
+      
       <div id="resultado" style="text-align:center; font-size: 1.1rem; margin-top: 10px;"></div>
       <div id="avisoSiguiente" style="text-align:center; margin-top: 10px;"></div>
 
@@ -109,6 +113,42 @@
       document.getElementById('opciones').innerHTML = '';
       document.getElementById('temporizador').textContent = '';
     }
+
+    function volverAlMenu() {
+      document.querySelectorAll('.seccion').forEach(sec => sec.style.display = 'none');
+      document.getElementById('menu').style.display = 'flex';
+
+      // Cancelar temporizador y timeout si están activos
+     if (typeof temporizadorId !== 'undefined' && temporizadorId) clearInterval(temporizadorId);
+     if (typeof timeoutResultadoId !== 'undefined' && timeoutResultadoId) clearTimeout(timeoutResultadoId);
+
+     // Limpiar visualmente
+      document.body.style.backgroundImage = '';
+      document.getElementById('resultado').textContent = '';
+      document.getElementById('avisoSiguiente').textContent = '';
+      document.getElementById('opciones').innerHTML = '';
+      document.getElementById('temporizador').textContent = '';
+      document.getElementById('puntuaciones').innerHTML = '';
+      document.getElementById('infoTurno').textContent = '';
+      document.getElementById('ronda').textContent = '1';
+      document.getElementById('seleccionCarpeta').style.display = 'block';
+      document.getElementById('zonaJuego').style.display = 'none';
+
+      // Resetear variables globales del juego
+      cancionesDisponibles = [];
+      cancionesFalladas = [];
+      cancionesUsadas.clear();
+
+      numRondas = 0;
+      rondaActual = 1;
+      jugadores = [];
+      jugadorActualIndice = 0;
+
+      $('#infoTurno').classList.remove('final-texto');
+      $('#resultado').classList.remove('final-texto');
+      $('#ronda').parentElement.classList.remove('final-puntuacion');
+    }
+
   </script>
 
 </body>
