@@ -25,6 +25,3 @@ Este es un juego clásico de **Tres en Raya** (Tic-Tac-Toe) con inteligencia art
 - Navegador moderno (Chrome, Firefox, Edge, Safari…).
 - No requiere instalación ni conexión a internet.
 
----
-
-¿Quieres que te lo pase también en inglés o como archivo `README.md` listo para GitHub?
