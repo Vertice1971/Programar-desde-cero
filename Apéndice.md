@@ -9,6 +9,7 @@
 - [06 – Final Pong 2025](https://vertice1971.github.io/Programar-desde-cero/06FinalPong2025.html)
 - [07 – Piedra, papel, tijera (versión alfa)](https://vertice1971.github.io/Programar-desde-cero/07Piedra-alfa.html)
 - [07 – Piedra, papel, tijera (versión beta)](https://vertice1971.github.io/Programar-desde-cero/07Piedra-beta.html)
+- [07 – Piedra, papel, tijera](https://vertice1971.github.io/Programar-desde-cero/07Piedra.html)
 - [08 – Piedra, papel, tijera, lagarto, Spock](https://vertice1971.github.io/Programar-desde-cero/08Spock.html)
 - [09 – Motor Test Múltiple](https://vertice1971.github.io/Programar-desde-cero/09Motor%20Test%20Múltiple.html)
 - [10 – Estadística 1](https://vertice1971.github.io/Programar-desde-cero/10Estadística1.html)
